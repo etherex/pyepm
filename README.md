@@ -45,10 +45,18 @@ You will need a package definition file in YAML format to get started:
     NameReg:
       to: $NameReg
       value: 0
-      data: "register" "caktux"
+      data: register caktux
       gas: 10000
       gas_price: 10000000000000
       wait: True
+-
+# Contract calls with return values
+  call:
+    MyContract:
+      to: $NameReg
+      value: 0
+      funid: 2
+      data: 0x12345
 -
 # Another deploy
   deploy:
@@ -87,7 +95,7 @@ optional arguments:
 ```
 
 ## TODO
-- ***Transact not implemented yet***
-- ***Variables from "set" steps***
+- ~~Transact not implemented yet~~
+- ~~Variables from "set" steps~~
 - Endowments
 - Support named values (1 ether)

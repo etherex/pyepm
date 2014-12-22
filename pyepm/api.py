@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-22 00:53:01
+# @Last Modified time: 2014-12-22 04:24:00
 
 import json
 import logging
@@ -82,7 +82,7 @@ class Api(object):
     def coinbase(self):
         return self._rpc_post('eth_coinbase', None)
 
-    def create(self, code, from_=config.get("api", "address"), gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0):
+    def create(self, code, from_=config.get("api", "address"), gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), endowment=0):
         if not code.startswith('0x'):
             code = '0x' + code
         params = [{'code': code}]
