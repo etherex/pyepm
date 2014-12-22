@@ -21,3 +21,5 @@ logging.conf
 .coverage
 *.se
 *.yaml
+MANIFEST
+upload
