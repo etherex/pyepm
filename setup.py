@@ -1,8 +1,8 @@
 from setuptools import setup, find_packages
 import versioneer
 versioneer.VCS = 'git'
-versioneer.versionfile_source = '_version.py'
-versioneer.versionfile_build = '_version.py'
+versioneer.versionfile_source = 'pyepm/_version.py'
+versioneer.versionfile_build = 'pyepm/_version.py'
 versioneer.tag_prefix = '' # tags are like 1.2.0
 versioneer.parentdir_prefix = 'pyepm-' # dirname like 'myproject-1.2.0'
 
