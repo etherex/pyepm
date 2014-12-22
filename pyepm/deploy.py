@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-22 04:36:43
+# @Last Modified time: 2014-12-22 08:56:33
 
 import logging
 
@@ -54,6 +54,7 @@ def deploy(filename, wait=False):
                     from_ = default_from
                     gas = default_gas
                     gas_price = default_gas_price
+                    value = 0
                     wait = False
                     for option in definition[key][name]:
                         if option == 'contract':
