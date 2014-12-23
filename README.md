@@ -23,7 +23,8 @@ First run `pyepm -h` to create a config file in `~/.pyepm/config` on Linux and O
 
 Then edit the configuration file, make sure you set the `address` from which to deploy contracts.
 
-You will need a package definition file in YAML format to get started:
+You will need a package definition file in YAML format to get started (see example below). You can use your deployed contracts' names as variables (prefixed with `$`) in later `transact` or `call` steps, making contract initialization a lot easier and less dependent on fixed contract addresses.
+
 ```
 -
 # Set some variables.
@@ -40,23 +41,27 @@ You will need a package definition file in YAML format to get started:
       gas: 100000
       endowment: 1000000000000000000
 -
-# Make transactions
+# Make transactions, here we register the previously deployed
+# 'Subcurrency' contract with the global NameReg
   transact:
     NameReg:
       to: $NameReg
-      value: 0
-      data: register caktux
+      funid: 0
+      data: $Subcurrency
       gas: 10000
       gas_price: 10000000000000
+      value: 0
       wait: True
 -
 # Contract calls with return values
   call:
-    MyContract:
-      to: $NameReg
+    MySubcurrency:
+      to: $Subcurrency
       value: 0
-      funid: 2
-      data: 0x12345
+      funid: 1
+      data:
+        - 0x1
+        - 0x12345
 -
 # Another deploy
   deploy:
@@ -97,5 +102,6 @@ optional arguments:
 ## TODO
 - ~~Transact not implemented yet~~
 - ~~Variables from "set" steps~~
+- Fix `call` making invalid transactions, use `transact` for now
 - Endowments
 - Support named values (1 ether)

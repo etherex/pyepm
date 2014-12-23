@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-22 08:56:33
+# @Last Modified time: 2014-12-23 03:07:09
 
 import logging
 
@@ -35,17 +35,9 @@ def deploy(filename, wait=False):
             logger.info("%s: " % key)
 
             if key == 'set':
-                for name in definition[key]:
-                    # Replace variables
-                    for repdef in definitions:
-                        for repkey in repdef:
-                            for repname in repdef[repkey]:
-                                if repkey != 'set':
-                                    for repoption in repdef[repkey][repname]:
-                                        if repdef[repkey][repname][repoption] == "$%s" % name:
-                                            logger.debug("Replacing $%s with %s" % (name, definition[key][name]))
-                                            repdef[repkey][repname][repoption] = definition[key][name]
-                    logger.info("  %s: %s" % (name, definition[key][name]))
+                for variable in definition[key]:
+                    replacement = definition[key][variable]
+                    definitions = replace(variable, definitions, replacement)
                 logger.debug(definitions)
 
             if key == 'deploy':
@@ -68,7 +60,9 @@ def deploy(filename, wait=False):
                         if option == 'wait':
                             wait = definition[key][name][option]
                     logger.info("    Deploying %s..." % contract)
-                    create(contract, gas, gas_price, value, wait)
+                    contract_address = create(contract, gas, gas_price, value, wait)
+                    definitions = replace(name, definitions, contract_address, True)
+                    logger.debug(definitions)
 
             if key in ['transact', 'call']:
                 for name in definition[key]:
@@ -104,7 +98,6 @@ def deploy(filename, wait=False):
                     elif key == 'call':
                         call(to, from_, funid, data, gas, gas_price, value, wait)
 
-
 def create(contract, gas, gas_price, value, wait):
     instance = api.Api()
     contract = compile(open(contract).read()).encode('hex')
@@ -112,6 +105,8 @@ def create(contract, gas, gas_price, value, wait):
     logger.info("      Contract is available at %s" % contract_address)
     if wait:
         instance.wait_for_next_block(verbose=(True if config.get('misc', 'verbosity') > 1 else False))
+
+    return contract_address
 
 def transact(to, from_, funid, data, gas, gas_price, value, wait):
     instance = api.Api()
@@ -126,6 +121,32 @@ def call(to, from_, funid, data, gas, gas_price, value, wait):
     logger.info("      Result: %s" % result)
     if wait:
         instance.wait_for_next_block(verbose=(True if config.get('misc', 'verbosity') > 1 else False))
+
+    return result
+
+def replace(variable, definitions, replacement, isContract=False):
+    # Replace variables
+    count = 0
+    for repdef in definitions:
+        for repkey in repdef:
+            for repname in repdef[repkey]:
+                if repkey != 'set':
+                    for repoption in repdef[repkey][repname]:
+                        to_replace = repdef[repkey][repname][repoption]
+                        if to_replace == "$%s" % variable:
+                            logger.debug("- Replacing $%s with %s" % (variable, replacement))
+                            repdef[repkey][repname][repoption] = replacement
+                            count = count + 1
+                        if repoption == 'data':
+                            for repdata in to_replace:
+                                if repdata == "$%s" % variable:
+                                    logger.debug("- Replacing $%s with %s" % (variable, replacement))
+                                    repdef[repkey][repname][repoption] = replacement
+                                    count = count + 1
+    if count:
+        logger.info("  %sReplacing $%s with %s (%s)" % (("      " if isContract else ""), variable, replacement, count))
+
+    return definitions
 
 def load_yaml(filename):
     logger.info("Loading %s..." % filename)
