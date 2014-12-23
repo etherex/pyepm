@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-23 04:35:27
+# @Last Modified time: 2014-12-23 06:47:11
 
 import json
 import logging
@@ -85,14 +85,13 @@ class Api(object):
     def create(self, code, from_=config.get("api", "address"), gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), endowment=0):
         if not code.startswith('0x'):
             code = '0x' + code
-        params = [{'code': code}]
-        # FIXME
-        # params = [{
-        #    'code': code,
-        #    'from': from_,
-        #    'gas': hex(gas),
-        #    'gasPrice': hex(gas_price),
-        #    'value': hex(value)}]
+        # params = [{'code': code}]
+        params = [{
+           'code': code,
+           'from': from_,
+           'gas': hex(gas),
+           'gasPrice': hex(gas_price),
+           'value': hex(endowment)}]
         return self._rpc_post('eth_transact', params)
 
     def is_contract_at(self, address):
@@ -139,7 +138,9 @@ class Api(object):
             dest = '0x' + dest
 
         if funid is not None:
-            data = "0x" + serpent.encode_abi(funid, data).encode('hex')
+            data_abi = serpent.encode_abi(funid, data).encode('hex')
+            logger.debug("ABI data: 0x%s" % data_abi)
+            data = "0x" + data_abi
 
         params = [{
             'to': dest,
@@ -154,7 +155,9 @@ class Api(object):
             dest = '0x' + dest
 
         if funid is not None:
-            data = "0x" + serpent.encode_abi(funid, data).encode('hex')
+            data_abi = serpent.encode_abi(funid, data).encode('hex')
+            logger.debug("ABI data: 0x%s" % data_abi)
+            data = "0x" + data_abi
 
         params = [{
             'to': dest,

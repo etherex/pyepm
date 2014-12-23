@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-23 05:35:01
+# @Last Modified time: 2014-12-23 06:38:30
 
 import logging
 
@@ -24,9 +24,6 @@ default_gas_price = int(config.get('deploy', 'gas_price'))
 def deploy(filename, wait=False):
     # Load YAML definitions
     definitions = load_yaml(filename)
-
-    # Dynamic variables
-    variables = {}
 
     logger.info("Parsing %s..." % filename)
 
