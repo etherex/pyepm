@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-23 03:07:09
+# @Last Modified time: 2014-12-23 05:35:01
 
 import logging
 
@@ -62,7 +62,7 @@ def deploy(filename, wait=False):
                     logger.info("    Deploying %s..." % contract)
                     contract_address = create(contract, gas, gas_price, value, wait)
                     definitions = replace(name, definitions, contract_address, True)
-                    logger.debug(definitions)
+                logger.debug(definitions)
 
             if key in ['transact', 'call']:
                 for name in definition[key]:
@@ -83,6 +83,13 @@ def deploy(filename, wait=False):
                         if option == 'funid':
                             funid = definition[key][name][option]
                         if option == 'data':
+                            dat = definition[key][name][option]
+                            if isinstance(dat, list):
+                                for i, d in enumerate(dat):
+                                    if isinstance(d, (basestring)) and not d.startswith("0x") and not d.startswith("$"):
+                                        padded = "0x" + d.encode('hex').zfill(32)
+                                        definition[key][name][option][i] = u"%s" % padded
+                                        logger.info("  Converting '%s' string to %s" % (d, padded))
                             data = definition[key][name][option]
                         if option == 'gas':
                             gas = definition[key][name][option]
@@ -92,7 +99,8 @@ def deploy(filename, wait=False):
                             value = definition[key][name][option]
                         if option == 'wait':
                             wait = definition[key][name][option]
-                    logger.info("    Transaction to %s..." % to)
+                    logger.info("    Transaction to %s (%s)..." % (name, to))
+                    logger.info("      with data: %s" % data)
                     if key == 'transact':
                         transact(to, from_, funid, data, gas, gas_price, value, wait)
                     elif key == 'call':
@@ -138,10 +146,10 @@ def replace(variable, definitions, replacement, isContract=False):
                             repdef[repkey][repname][repoption] = replacement
                             count = count + 1
                         if repoption == 'data':
-                            for repdata in to_replace:
+                            for i, repdata in enumerate(to_replace):
                                 if repdata == "$%s" % variable:
                                     logger.debug("- Replacing $%s with %s" % (variable, replacement))
-                                    repdef[repkey][repname][repoption] = replacement
+                                    repdef[repkey][repname][repoption][i] = replacement
                                     count = count + 1
     if count:
         logger.info("  %sReplacing $%s with %s (%s)" % (("      " if isContract else ""), variable, replacement, count))
