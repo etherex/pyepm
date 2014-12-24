@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-23 06:38:30
+# @Last Modified time: 2014-12-24 03:14:03
 
 import logging
 
@@ -96,8 +96,9 @@ def deploy(filename, wait=False):
                             value = definition[key][name][option]
                         if option == 'wait':
                             wait = definition[key][name][option]
-                    logger.info("    Transaction to %s (%s)..." % (name, to))
-                    logger.info("      with data: %s" % data)
+                    logger.info("    %s to %s (%s)..." % ("Transaction" if key == 'transact' else "Call", name, to))
+                    if data:
+                        logger.info("      with data: %s" % data)
                     if key == 'transact':
                         transact(to, from_, funid, data, gas, gas_price, value, wait)
                     elif key == 'call':

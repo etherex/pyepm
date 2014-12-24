@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-23 06:47:11
+# @Last Modified time: 2014-12-24 03:14:12
 
 import json
 import logging
@@ -162,7 +162,6 @@ class Api(object):
         params = [{
             'to': dest,
             'data': data,
-            'from': from_,
             'gas': hex(gas),
             'gasPrice': hex(gas_price),
             'value': hex(value)}]
