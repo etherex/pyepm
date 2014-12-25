@@ -9,10 +9,14 @@ versioneer.tag_prefix = '' # tags are like 1.2.0
 versioneer.parentdir_prefix = 'pyepm-' # dirname like 'myproject-1.2.0'
 
 CONSOLE_SCRIPTS = ['pyepm=pyepm.pyepm:main']
+LONG="""
+Python-based EPM (Ethereum Package Manager) for Serpent 2 contract deployment using YAML for package definitions.
+"""
 
 setup(name="pyepm",
       packages=find_packages("."),
       description='Python Ethereum Package Manager',
+      long_description = LONG,
       author="caktux",
       author_email="caktux@gmail.com",
       url='https://github.com/etherex/pyepm/',
