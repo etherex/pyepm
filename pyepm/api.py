@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-24 03:14:12
+# @Last Modified time: 2014-12-27 14:44:32
 
 import json
 import logging
@@ -145,9 +145,9 @@ class Api(object):
         params = [{
             'to': dest,
             'data': data,
-            'gas': hex(gas),
-            'gasPrice': hex(gas_price),
-            'value': hex(value)}]
+            'gas': str(gas),
+            'gasPrice': str(gas_price),
+            'value': str(value)}]
         return self._rpc_post('eth_transact', params)
 
     def call(self, dest, from_=config.get("api", "address"), funid=None, data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0):
@@ -162,9 +162,9 @@ class Api(object):
         params = [{
             'to': dest,
             'data': data,
-            'gas': hex(gas),
-            'gasPrice': hex(gas_price),
-            'value': hex(value)}]
+            'gas': str(gas),
+            'gasPrice': str(gas_price),
+            'value': str(value)}]
         r = self._rpc_post('eth_call', params)
         return serpent.decode_datalist(r[2:].decode('hex'))
 
