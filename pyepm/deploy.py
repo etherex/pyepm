@@ -3,10 +3,11 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-24 03:14:03
+# @Last Modified time: 2015-01-06 22:26:26
 
 import logging
 
+import os
 import api
 import json
 import yaml
@@ -26,6 +27,7 @@ def deploy(filename, wait=False):
     definitions = load_yaml(filename)
 
     logger.info("Parsing %s..." % filename)
+    path = os.path.dirname(filename)
 
     for definition in definitions:
         for key in definition:
@@ -56,8 +58,8 @@ def deploy(filename, wait=False):
                             value = definition[key][name][option]
                         if option == 'wait':
                             wait = definition[key][name][option]
-                    logger.info("    Deploying %s..." % contract)
-                    contract_address = create(contract, gas, gas_price, value, wait)
+                    logger.info("    Deploying %s..." % os.path.join(path, contract))
+                    contract_address = create("%s" % os.path.join(path, contract), gas, gas_price, value, wait)
                     definitions = replace(name, definitions, contract_address, True)
                 logger.debug(definitions)
 
