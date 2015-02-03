@@ -1,4 +1,4 @@
 pyyaml
 requests
 pyethereum
-ethereum-serpent
+ethereum-serpent>=1.8.0
