@@ -133,12 +133,12 @@ class Api(object):
         params = [address]
         return self._rpc_post('eth_storageAt', params)
 
-    def transact(self, dest, from_=config.get("api", "address"), funid=None, data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0):
+    def transact(self, dest, fun_name=None, sig='', data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0, from_=config.get("api", "address")):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
-        if funid is not None:
-            data_abi = serpent.encode_abi(funid, *data).encode('hex')
+        if fun_name is not None:
+            data_abi = serpent.encode_abi(fun_name, sig, *data).encode('hex')
             logger.debug("ABI data: 0x%s" % data_abi)
             data = "0x" + data_abi
 
@@ -150,14 +150,13 @@ class Api(object):
             'value': str(value)}]
         return self._rpc_post('eth_transact', params)
 
-    def call(self, dest, from_=config.get("api", "address"), funid=None, data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0):
+    def call(self, dest, fun_name, sig='', data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0, from_=config.get("api", "address")):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
-        if funid is not None:
-            data_abi = serpent.encode_abi(funid, *data).encode('hex')
-            logger.debug("ABI data: 0x%s" % data_abi)
-            data = "0x" + data_abi
+        data_abi = serpent.encode_abi(fun_name, sig, *data).encode('hex')
+        logger.debug("ABI data: 0x%s" % data_abi)
+        data = "0x" + data_abi
 
         params = [{
             'to': dest,
