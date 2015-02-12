@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-01-12 13:50:14
+# @Last Modified time: 2015-02-12 04:39:38
 
 import json
 import logging
@@ -12,8 +12,8 @@ import sys
 import time
 from uuid import uuid4
 
-from pyethereum import utils
-import serpent
+from pyethereum import abi
+from serpent import get_prefix, decode_datalist
 
 import config as c
 config = c.read_config()
@@ -133,14 +133,31 @@ class Api(object):
         params = [address]
         return self._rpc_post('eth_storageAt', params)
 
+    def abi_data(self, fun_name, sig, data):
+        types = []
+        prefix = get_prefix(fun_name, sig)
+        data_abi = hex(prefix)
+
+        for i, s in enumerate(sig):
+            if s == 's':
+                types.append('string')
+            elif s == 'a':
+                types.append('int256[]')
+            else:
+                if isinstance(data[i], (str, unicode)) and data[i][:2] == "0x":
+                    data[i] = int(data[i], 16)
+                types.append('int256')
+        data_abi += abi.encode_abi(types, data).encode('hex')
+
+        logger.debug("ABI data: %s" % data_abi)
+        return data_abi
+
     def transact(self, dest, fun_name=None, sig='', data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0, from_=config.get("api", "address")):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
-            data_abi = serpent.encode_abi(fun_name, sig, *data).encode('hex')
-            logger.debug("ABI data: 0x%s" % data_abi)
-            data = "0x" + data_abi
+            data = self.abi_data(fun_name, sig, data)
 
         params = [{
             'to': dest,
@@ -154,9 +171,8 @@ class Api(object):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
-        data_abi = serpent.encode_abi(fun_name, sig, *data).encode('hex')
-        logger.debug("ABI data: 0x%s" % data_abi)
-        data = "0x" + data_abi
+        if fun_name is not None:
+            data = self.abi_data(fun_name, sig, data)
 
         params = [{
             'to': dest,
@@ -165,7 +181,7 @@ class Api(object):
             'gasPrice': str(gas_price),
             'value': str(value)}]
         r = self._rpc_post('eth_call', params)
-        return serpent.decode_datalist(r[2:].decode('hex'))
+        return decode_datalist(r[2:].decode('hex'))
 
     def wait_for_next_block(self, verbose=False):
         if verbose:

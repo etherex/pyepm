@@ -46,8 +46,10 @@ You will need a package definition file in YAML format to get started (see examp
   transact:
     NameReg:
       to: $NameReg
-      funid: 0
-      data: $Subcurrency
+      fun_name: register
+      sig: i
+      data:
+        - $Subcurrency
       gas: 10000
       gas_price: 10000000000000
       value: 0
@@ -58,7 +60,8 @@ You will need a package definition file in YAML format to get started (see examp
     MySubcurrency:
       to: $Subcurrency
       value: 0
-      funid: 1
+      fun_name: get_names
+      sig: ii
       data:
         - 0x1
         - 0x12345
