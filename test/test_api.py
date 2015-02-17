@@ -149,7 +149,7 @@ def test_transact(mocker):
                     rpc_method='eth_transact', rpc_params=rpc_params) is None
 
 # TODO should value be there?
-def test_call(mocker):
+def test_call_multiply(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     fun_name = 'multiply'
     sig = 'i'
@@ -163,3 +163,21 @@ def test_call(mocker):
                    'value': '0'}]
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [21]
+
+def test_call_returning_array(mocker):
+    address = '0x7b089cfe50c1a5fe5b0da352348a43bba81addd4'
+    fun_name = 'get_stats'
+    sig = ''
+    data = []
+    data_abi = '0x61837e41'
+    json_result = '0x0000000000000000000000000000000000000000000000000000000000000003' +\
+                  '0000000000000000000000000000000000000000000000000000000000000002' +\
+                  '0000000000000000000000000000000000000000000000000000000000000001' +\
+                  '0000000000000000000000000000000000000000000000000000000000000000'
+    rpc_params = [{'gas': '10000',
+                   'to': address,
+                   'data': data_abi,
+                   'gasPrice': '10000000000000',
+                   'value': '0'}]
+    assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
+                    rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3
