@@ -1,7 +1,9 @@
-from pyepm import deploy
+from pyepm import deploy, config
+config = config.get_default_config()
 
 def test_load_yaml():
-    result = deploy.load_yaml('test/fixtures/example.yaml.fixture')
+    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
+    result = deployment.load_yaml()
     assert result == [
         {'set': {'NameReg': '0x72ba7d8e73fe8eb666ea66babc8116a41bfb10e2'}},
         {'deploy': {'NameCoin': {'contract': 'namecoin.se', 'wait': True},

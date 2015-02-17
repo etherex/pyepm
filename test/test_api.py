@@ -3,7 +3,8 @@ import pytest
 import requests
 
 from pyepm import config
-config.read_config = config.get_default_config
+config = config.get_default_config()
+
 from pyepm import api  # NOQA
 
 base_json_response = {u'jsonrpc': u'2.0', u'id': u'c7c427a5-b6e9-4dbf-b218-a6f9d4f09246'}
@@ -22,7 +23,7 @@ def mock_json_response(status_code=200, error=None, result=None):
     return m
 
 def test_api_exception_error_response(mocker):
-    instance = api.Api()
+    instance = api.Api(config)
     mocker.patch('requests.post', return_value=mock_json_response(error={'code': 31337, 'message': 'Too Elite'}))
     with pytest.raises(api.ApiException) as excinfo:
         instance.coinbase()
@@ -30,7 +31,7 @@ def test_api_exception_error_response(mocker):
     assert excinfo.value.message == 'Too Elite'
 
 def test_api_exception_status_code(mocker):
-    instance = api.Api()
+    instance = api.Api(config)
     mocker.patch('requests.post', return_value=mock_json_response(status_code=404))
     with pytest.raises(api.ApiException) as excinfo:
         instance.coinbase()
@@ -38,7 +39,7 @@ def test_api_exception_status_code(mocker):
     assert excinfo.value.message == 'Error Reason'
 
 def mock_rpc(mocker, rpc_fun, rpc_args, json_result, rpc_method, rpc_params):
-    instance = api.Api()
+    instance = api.Api(config)
 
     mocker.patch('requests.post', return_value=mock_json_response(result=json_result))
     mock_rpc_post = mocker.patch.object(instance, '_rpc_post', side_effect=instance._rpc_post)

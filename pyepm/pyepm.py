@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-01-06 22:08:20
+# @Last Modified time: 2015-02-17 18:04:31
 
 import os
 import json
@@ -11,7 +11,7 @@ import shutil
 import config as c
 import logging
 import logging.config
-from deploy import *
+import deploy
 logger = logging.getLogger(__name__)
 
 from utils import config_dir, configure_logging
@@ -105,7 +105,8 @@ def main():
             logger.warn("File does not exist: %s" % filename)
         else:
             logger.info("Deploying %s..." % filename)
-            deploy(filename)
+            deployment = deploy.Deploy(filename, config)
+            deployment.deploy()
 
 
 if __name__ == '__main__':

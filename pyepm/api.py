@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-12 04:39:38
+# @Last Modified time: 2015-02-17 18:49:12
 
 import json
 import logging
@@ -14,9 +14,6 @@ from uuid import uuid4
 
 from pyethereum import abi
 from serpent import get_prefix, decode_datalist
-
-import config as c
-config = c.read_config()
 
 logger = logging.getLogger(__name__)
 
@@ -31,11 +28,15 @@ class ApiException(Exception):
 
 class Api(object):
 
-    def __init__(self):
+    def __init__(self, config):
         self.host = config.get('api', 'host')
         self.port = config.getint('api', 'port')
         self.jsonrpc_url = "http://%s:%s" % (self.host, self.port)
+        logger.debug("Deploying to %s" % self.jsonrpc_url)
+
         self.address = config.get("api", "address")
+        self.gas = config.get("deploy", "gas")
+        self.gas_price = config.get("deploy", "gas_price")
 
     def _rpc_post(self, method, params):
         payload = {
@@ -82,10 +83,18 @@ class Api(object):
     def coinbase(self):
         return self._rpc_post('eth_coinbase', None)
 
-    def create(self, code, from_=config.get("api", "address"), gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), endowment=0):
+    def create(self, code, from_=None, gas=None, gas_price=None, endowment=0):
         if not code.startswith('0x'):
             code = '0x' + code
         # params = [{'code': code}]
+
+        if gas is None:
+            gas = self.gas
+        if gas_price is None:
+            gas_price = self.gas_price
+        if from_ is None:
+            from_ = self.address
+
         params = [{
            'code': code,
            'from': from_,
@@ -152,12 +161,19 @@ class Api(object):
         logger.debug("ABI data: %s" % data_abi)
         return data_abi
 
-    def transact(self, dest, fun_name=None, sig='', data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0, from_=config.get("api", "address")):
+    def transact(self, dest, fun_name=None, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
             data = self.abi_data(fun_name, sig, data)
+
+        if gas is None:
+            gas = self.gas
+        if gas_price is None:
+            gas_price = self.gas_price
+        if from_ is None:
+            from_ = self.address
 
         params = [{
             'to': dest,
@@ -167,12 +183,19 @@ class Api(object):
             'value': str(value)}]
         return self._rpc_post('eth_transact', params)
 
-    def call(self, dest, fun_name, sig='', data=None, gas=config.get("deploy", "gas"), gas_price=config.get("deploy", "gas_price"), value=0, from_=config.get("api", "address")):
+    def call(self, dest, fun_name, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
             data = self.abi_data(fun_name, sig, data)
+
+        if gas is None:
+            gas = self.gas
+        if gas_price is None:
+            gas_price = self.gas_price
+        if from_ is None:
+            from_ = self.address
 
         params = [{
             'to': dest,
