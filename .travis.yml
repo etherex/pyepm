@@ -4,6 +4,7 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install -r dev_requirements.txt
+  - pip install -e .
 script:
   - py.test
   - flake8
