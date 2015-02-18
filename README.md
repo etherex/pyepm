@@ -57,14 +57,12 @@ You will need a package definition file in YAML format to get started (see examp
 -
 # Contract calls with return values
   call:
-    MySubcurrency:
-      to: $Subcurrency
-      value: 0
-      fun_name: get_names
-      sig: ii
+    GetMarket:
+      to: "0x77045e71a7a2c50903d88e564cd72fab11e82051"
+      fun_name: get_market
+      sig: i
       data:
-        - 0x1
-        - 0x12345
+        - 1
 -
 # Another deploy
   deploy:
@@ -112,8 +110,7 @@ optional arguments:
 ```
 
 ## TODO
-- ~~Transact not implemented yet~~
-- ~~Variables from "set" steps~~
-- Fix `call` making invalid transactions, use `transact` for now
-- Endowments
+- Support using variables across multiple definition files
+- Export addresses of deployed contracts in a json file
+- Post-deployment hooks
 - Support named values (1 ether)

@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-17 18:49:12
+# @Last Modified time: 2015-02-17 23:54:25
 
 import json
 import logging
@@ -183,7 +183,7 @@ class Api(object):
             'value': str(value)}]
         return self._rpc_post('eth_transact', params)
 
-    def call(self, dest, fun_name, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
+    def call(self, dest, fun_name, sig='', data=None, gas=None, gas_price=None, from_=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
@@ -201,8 +201,7 @@ class Api(object):
             'to': dest,
             'data': data,
             'gas': str(gas),
-            'gasPrice': str(gas_price),
-            'value': str(value)}]
+            'gasPrice': str(gas_price)}]
         r = self._rpc_post('eth_call', params)
         return decode_datalist(r[2:].decode('hex'))
 

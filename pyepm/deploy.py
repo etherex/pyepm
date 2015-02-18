@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-17 23:29:14
+# @Last Modified time: 2015-02-18 00:12:10
 
 import logging
 
@@ -116,7 +116,7 @@ class Deploy(object):
                         if key == 'transact':
                             self.transact(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
                         elif key == 'call':
-                            self.call(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
+                            self.call(to, from_, fun_name, sig, data, gas, gas_price, wait)
 
     def compile_solidity(self, contract, contract_names=[]):
         subprocess.call(["solc", "--input-file", contract, "--binary", "file"])
@@ -138,7 +138,7 @@ class Deploy(object):
             contracts = self.compile_solidity(contract, contract_names)
             if contract_names:
                 for contract_name, contract in contracts:
-                    logger.info("%s: %s" % (contract_name, contract))
+                    logger.debug("%s: %s" % (contract_name, contract))
                     contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
                     contract_addresses.append(contract_address)
                     logger.info("      Contract '%s' is available at %s" % (contract_name, contract_address))
@@ -163,9 +163,9 @@ class Deploy(object):
         if wait:
             instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
-    def call(self, to, from_, fun_name, sig, data, gas, gas_price, value, wait):
+    def call(self, to, from_, fun_name, sig, data, gas, gas_price, wait):
         instance = api.Api(self.config)
-        result = instance.call(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
+        result = instance.call(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price)
         logger.info("      Result: %s" % result)
         if wait:
             instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))

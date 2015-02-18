@@ -18,8 +18,10 @@
   transact:
     NameReg:
       to: $NameReg
-      funid: 0
-      data: $Subcurrency
+      fun_name: register
+      sig: i
+      data:
+        - $Subcurrency
       gas: 10000
       gas_price: 10000000000000
       value: 0
@@ -27,13 +29,12 @@
 -
 # Contract calls with return values
   call:
-    MySubcurrency:
-      to: $Subcurrency
-      value: 0
-      funid: 1
+    GetMarket:
+      to: "0x77045e71a7a2c50903d88e564cd72fab11e82051"
+      fun_name: get_market
+      sig: i
       data:
-        - 0x1
-        - 0x12345
+        - 1
 -
 # Another deploy
   deploy:

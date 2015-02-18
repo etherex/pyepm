@@ -165,7 +165,6 @@ def test_storage_at(mocker):
     assert mock_rpc(mocker, 'storage_at', [address], json_result={'0x': '0x03'},
                     rpc_method='eth_storageAt', rpc_params=[address]) == {'0x': '0x03'}
 
-# TODO with value, should it be hex encoded?
 def test_transact(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     rpc_params = [{'gas': '10000',
@@ -176,7 +175,6 @@ def test_transact(mocker):
     assert mock_rpc(mocker, 'transact', [address], json_result=None,
                     rpc_method='eth_transact', rpc_params=rpc_params) is None
 
-# TODO should value be there?
 def test_call_multiply(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     fun_name = 'multiply'
@@ -187,8 +185,7 @@ def test_call_multiply(mocker):
     rpc_params = [{'gas': '10000',
                    'to': address,
                    'data': data_abi,
-                   'gasPrice': '10000000000000',
-                   'value': '0'}]
+                   'gasPrice': '10000000000000'}]
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [21]
 
@@ -205,7 +202,6 @@ def test_call_returning_array(mocker):
     rpc_params = [{'gas': '10000',
                    'to': address,
                    'data': data_abi,
-                   'gasPrice': '10000000000000',
-                   'value': '0'}]
+                   'gasPrice': '10000000000000'}]
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3
