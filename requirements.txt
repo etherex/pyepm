@@ -1,4 +1,4 @@
 pyyaml
 requests
-pyethereum
-ethereum-serpent>=1.8.0
+https://github.com/ethereum/serpent/tarball/develop
+https://github.com/ethereum/pyethereum/tarball/develop
