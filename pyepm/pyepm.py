@@ -3,19 +3,18 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-18 01:07:28
+# @Last Modified time: 2015-02-18 02:02:31
 
 import os
 import config as c
 import logging
 import logging.config
 import deploy
-logger = logging.getLogger(__name__)
-
 from utils import config_dir, configure_logging
 from argparse import ArgumentParser
-
 from . import __version__
+
+logger = logging.getLogger(__name__)
 
 def parse_arguments(parser):
     parser.add_argument(
