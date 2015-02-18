@@ -2,7 +2,7 @@ import mock
 import pytest
 import requests
 
-from pyepm import config
+from pyepm import deploy, config
 config = config.get_default_config()
 
 from pyepm import api  # NOQA
@@ -106,6 +106,33 @@ def test_is_contract_at_contract_exists(mocker):
                     rpc_method='eth_codeAt', rpc_params=[address])
 
 def test_is_contract_at_contract_doesnt_exists(mocker):
+    address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
+    code = '0x0000000000000000000000000000000000000000000000000000000000000000'
+    assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
+                        rpc_method='eth_codeAt', rpc_params=[address])
+
+def test_create_solidity(mocker):
+    contract = 'test/fixtures/config.sol'
+    deployment = deploy.Deploy(contract, config)
+    contracts = deployment.compile_solidity(contract, ['Config', 'mortal', 'owned'])
+
+    address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
+    for contract_name, code in contracts:
+        rpc_params = [{'gas': '10000',
+                       'code': code,
+                       'from': 'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+                       'value': '0',
+                       'gasPrice': '10000000000000'}]
+        assert mock_rpc(mocker, 'create', [code], json_result=address,
+                        rpc_method='eth_transact', rpc_params=rpc_params) == address
+
+def test_is_solidity_contract_at_contract_exists(mocker):
+    address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
+    code = '0xdeadbeef'
+    assert mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
+                    rpc_method='eth_codeAt', rpc_params=[address])
+
+def test_is_solidity_contract_at_contract_doesnt_exists(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0x0000000000000000000000000000000000000000000000000000000000000000'
     assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,

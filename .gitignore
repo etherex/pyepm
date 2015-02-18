@@ -20,6 +20,8 @@ logging.conf
 *.log
 .coverage
 *.se
+*.sol
+*.binary
 *.yaml
 MANIFEST
 upload

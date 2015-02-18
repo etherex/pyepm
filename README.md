@@ -70,6 +70,15 @@ You will need a package definition file in YAML format to get started (see examp
   deploy:
     extra:
       contract: short_namecoin.se
+-
+# Deploy Solidity contract
+  deploy:
+    Config:
+      contract: config.sol
+      solidity:
+        - Config
+        - mortal
+        - owned
 ```
 
 ## Usage

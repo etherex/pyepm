@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-17 18:41:40
+# @Last Modified time: 2015-02-17 23:29:14
 
 import logging
 
@@ -11,6 +11,7 @@ import os
 import api
 import json
 import yaml
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,7 @@ class Deploy(object):
                 if key == 'deploy':
                     for name in definition[key]:
                         # Reset default values at each definition
+                        contract_names = []
                         from_ = default_from
                         gas = default_gas
                         gas_price = default_gas_price
@@ -53,6 +55,8 @@ class Deploy(object):
                         for option in definition[key][name]:
                             if option == 'contract':
                                 contract = definition[key][name][option]
+                            if option == 'solidity':
+                                contract_names = definition[key][name][option]
                             if option == 'from':
                                 from_ = definition[key][name][option]
                             if option == 'gas':
@@ -64,7 +68,7 @@ class Deploy(object):
                             if option == 'wait':
                                 wait = definition[key][name][option]
                         logger.info("    Deploying %s..." % os.path.join(path, contract))
-                        contract_address = self.create("%s" % os.path.join(path, contract), from_, gas, gas_price, value, wait)
+                        contract_address = self.create("%s" % os.path.join(path, contract), from_, gas, gas_price, value, wait, contract_names=contract_names)
                         definitions = self.replace(name, definitions, contract_address, True)
                     logger.debug(definitions)
 
@@ -114,14 +118,42 @@ class Deploy(object):
                         elif key == 'call':
                             self.call(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
 
-    def create(self, contract, from_, gas, gas_price, value, wait):
+    def compile_solidity(self, contract, contract_names=[]):
+        subprocess.call(["solc", "--input-file", contract, "--binary", "file"])
+        contracts = []
+        if not isinstance(contract_names, list):
+            raise Exception("Contract names must be list")
+        if not contract_names:
+            contract_names = [contract[:-4]]
+        for contract_name in contract_names:
+            filename = "%s.binary" % contract_name
+            evm = "0x" + open(filename).read()
+            contracts.append((contract_name, evm))
+        return contracts
+
+    def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
         instance = api.Api(self.config)
-        contract = compile(open(contract).read()).encode('hex')
-        contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
-        logger.info("      Contract is available at %s" % contract_address)
+        contract_addresses = []
+        if contract[-3:] == 'sol' or contract_names:
+            contracts = self.compile_solidity(contract, contract_names)
+            if contract_names:
+                for contract_name, contract in contracts:
+                    logger.info("%s: %s" % (contract_name, contract))
+                    contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
+                    contract_addresses.append(contract_address)
+                    logger.info("      Contract '%s' is available at %s" % (contract_name, contract_address))
+            else:
+                contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
+                logger.info("      Contract is available at %s" % contract_address)
+        else:
+            contract = compile(open(contract).read()).encode('hex')
+            contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
+            logger.info("      Contract is available at %s" % contract_address)
         if wait:
             instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
+        if contract_addresses:
+            return contract_addresses
         return contract_address
 
     def transact(self, to, from_, fun_name, sig, data, gas, gas_price, value, wait):

@@ -21,4 +21,6 @@ def test_load_yaml():
                                     'funid': 1,
                                     'to': '$Subcurrency',
                                     'value': 0}}},
-        {'deploy': {'extra': {'contract': 'short_namecoin.se'}}}]
+        {'deploy': {'extra': {'contract': 'short_namecoin.se'}}},
+        {'deploy': {'Config': {'contract': 'config.sol',
+                               'solidity': ['Config', 'mortal', 'owned']}}}]
