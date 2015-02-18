@@ -3,11 +3,9 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-17 18:04:31
+# @Last Modified time: 2015-02-18 01:07:28
 
 import os
-import json
-import shutil
 import config as c
 import logging
 import logging.config
@@ -90,9 +88,7 @@ def main():
     config = create_config(parser)
 
     # Logging
-    configure_logging(config.get('misc', 'logging') or '',
-
-    verbosity=config.getint('misc', 'verbosity'))
+    configure_logging(config.get('misc', 'logging') or '', verbosity=config.getint('misc', 'verbosity'))
     logger.info('PyEPM %s', __version__)
     logger.info('=====')
 

@@ -5,18 +5,18 @@ import versioneer
 versioneer.VCS = 'git'
 versioneer.versionfile_source = 'pyepm/_version.py'
 versioneer.versionfile_build = 'pyepm/_version.py'
-versioneer.tag_prefix = '' # tags are like 1.2.0
-versioneer.parentdir_prefix = 'pyepm-' # dirname like 'myproject-1.2.0'
+versioneer.tag_prefix = ''  # tags are like 1.2.0
+versioneer.parentdir_prefix = 'pyepm-'  # dirname like 'myproject-1.2.0'
 
 CONSOLE_SCRIPTS = ['pyepm=pyepm.pyepm:main']
-LONG="""
+LONG = """
 Python-based EPM (Ethereum Package Manager) for Serpent 2 contract deployment using YAML for package definitions.
 """
 
 setup(name="pyepm",
       packages=find_packages("."),
       description='Python Ethereum Package Manager',
-      long_description = LONG,
+      long_description=LONG,
       author="caktux",
       author_email="caktux@gmail.com",
       url='https://github.com/etherex/pyepm/',
@@ -36,4 +36,4 @@ setup(name="pyepm",
           "Operating System :: MacOS :: MacOS X",
           "Operating System :: POSIX :: Linux",
           "Programming Language :: Python :: 2.7",
-          ])
+      ])

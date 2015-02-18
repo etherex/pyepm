@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-18 00:12:10
+# @Last Modified time: 2015-02-18 00:59:41
 
 import logging
 
@@ -204,4 +204,3 @@ class Deploy(object):
         logger.debug(json.dumps(data, indent=4))
 
         return data
-

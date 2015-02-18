@@ -3,10 +3,9 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-22 00:34:32
+# @Last Modified time: 2015-02-18 01:03:48
 
 import os
-import uuid
 import StringIO
 import ConfigParser
 from utils import config_dir
@@ -18,9 +17,7 @@ def default_config_dir():
 def default_config_path():
     return os.path.join(default_config_dir(), 'config')
 
-
-config_template = \
-"""
+config_template = """
 [api]
 # JSONRPC host and port
 host = 127.0.0.1

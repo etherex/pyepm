@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2014-12-22 00:24:52
+# @Last Modified time: 2015-02-18 01:05:24
 
 import os
 import sys
@@ -46,7 +46,7 @@ def configure_logging(loggerlevels=':DEBUG', verbosity=1):
         disable_existing_loggers=False,
         formatters=dict(
             debug=dict(
-                format='%(message)s' # '%(threadName)s:%(module)s: %(message)s'
+                format='%(message)s'  # '%(threadName)s:%(module)s: %(message)s'
             ),
             minimal=dict(
                 format='%(message)s'

@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-17 23:54:25
+# @Last Modified time: 2015-02-18 01:00:37
 
 import json
 import logging
@@ -96,11 +96,12 @@ class Api(object):
             from_ = self.address
 
         params = [{
-           'code': code,
-           'from': from_,
-           'gas': str(gas),
-           'gasPrice': str(gas_price),
-           'value': str(endowment)}]
+            'code': code,
+            'from': from_,
+            'gas': str(gas),
+            'gasPrice': str(gas_price),
+            'value': str(endowment)
+        }]
         return self._rpc_post('eth_transact', params)
 
     def is_contract_at(self, address):
