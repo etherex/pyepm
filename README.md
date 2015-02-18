@@ -1,5 +1,6 @@
 PyEPM
 ==========
+[![Build Status](https://travis-ci.org/etherex/pyepm.svg?branch=master)](https://travis-ci.org/etherex/pyepm)
 
 Python-based EPM (Ethereum Package Manager) for Serpent 2 contract deployment using YAML for package definitions.
 
