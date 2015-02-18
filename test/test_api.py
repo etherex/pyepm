@@ -3,11 +3,14 @@ import pytest
 import requests
 
 from pyepm import deploy, config
+from pyepm import api
+from distutils import spawn
+
 config = config.get_default_config()
 
-from pyepm import api  # NOQA
-
 base_json_response = {u'jsonrpc': u'2.0', u'id': u'c7c427a5-b6e9-4dbf-b218-a6f9d4f09246'}
+
+solc = pytest.mark.skipif(not spawn.find_executable("solc"), reason="solc compiler not found")
 
 def mock_json_response(status_code=200, error=None, result=None):
     m = mock.MagicMock(spec=requests.Response)
@@ -111,6 +114,7 @@ def test_is_contract_at_contract_doesnt_exists(mocker):
     assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
                         rpc_method='eth_codeAt', rpc_params=[address])
 
+@solc
 def test_create_solidity(mocker):
     contract = 'test/fixtures/config.sol'
     deployment = deploy.Deploy(contract, config)
@@ -126,12 +130,14 @@ def test_create_solidity(mocker):
         assert mock_rpc(mocker, 'create', [code], json_result=address,
                         rpc_method='eth_transact', rpc_params=rpc_params) == address
 
+@solc
 def test_is_solidity_contract_at_contract_exists(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0xdeadbeef'
     assert mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
                     rpc_method='eth_codeAt', rpc_params=[address])
 
+@solc
 def test_is_solidity_contract_at_contract_doesnt_exists(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0x0000000000000000000000000000000000000000000000000000000000000000'
