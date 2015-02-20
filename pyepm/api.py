@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-18 01:00:37
+# @Last Modified time: 2015-02-20 18:58:29
 
 import json
 import logging
@@ -16,6 +16,25 @@ from pyethereum import abi
 from serpent import get_prefix, decode_datalist
 
 logger = logging.getLogger(__name__)
+
+def abi_data(fun_name, sig, data):
+    types = []
+    prefix = get_prefix(fun_name, sig)
+    data_abi = hex(prefix)
+
+    for i, s in enumerate(sig):
+        if s == 's':
+            types.append('string')
+        elif s == 'a':
+            types.append('int256[]')
+        else:
+            if isinstance(data[i], (str, unicode)) and data[i][:2] == "0x":
+                data[i] = int(data[i], 16)
+            types.append('int256')
+    data_abi += abi.encode_abi(types, data).encode('hex')
+
+    logger.debug("ABI data: %s" % data_abi)
+    return data_abi
 
 class ApiException(Exception):
     def __init__(self, code, message):
@@ -143,31 +162,12 @@ class Api(object):
         params = [address]
         return self._rpc_post('eth_storageAt', params)
 
-    def abi_data(self, fun_name, sig, data):
-        types = []
-        prefix = get_prefix(fun_name, sig)
-        data_abi = hex(prefix)
-
-        for i, s in enumerate(sig):
-            if s == 's':
-                types.append('string')
-            elif s == 'a':
-                types.append('int256[]')
-            else:
-                if isinstance(data[i], (str, unicode)) and data[i][:2] == "0x":
-                    data[i] = int(data[i], 16)
-                types.append('int256')
-        data_abi += abi.encode_abi(types, data).encode('hex')
-
-        logger.debug("ABI data: %s" % data_abi)
-        return data_abi
-
     def transact(self, dest, fun_name=None, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
-            data = self.abi_data(fun_name, sig, data)
+            data = abi_data(fun_name, sig, data)
 
         if gas is None:
             gas = self.gas
@@ -189,7 +189,7 @@ class Api(object):
             dest = '0x' + dest
 
         if fun_name is not None:
-            data = self.abi_data(fun_name, sig, data)
+            data = abi_data(fun_name, sig, data)
 
         if gas is None:
             gas = self.gas
