@@ -83,3 +83,9 @@ def configure_logging(loggerlevels=':DEBUG', verbosity=1):
     logging.debug("Logging config: \n%s\n=====" % pprint.pformat(logconfig, width=4))
 
 config_dir = ConfigDir()
+
+def unhex(str):
+    """Converts an 'ethereum' style hex value to decimal"""
+    if str == "0x":
+        return 0
+    return int(str, 16)
