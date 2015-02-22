@@ -14,6 +14,7 @@ from uuid import uuid4
 
 from pyethereum import abi
 from serpent import get_prefix, decode_datalist
+from utils import unhex
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,7 @@ def abi_data(fun_name, sig, data):
             types.append('int256[]')
         else:
             if isinstance(data[i], (str, unicode)) and data[i][:2] == "0x":
-                data[i] = int(data[i], 16)
+                data[i] = unhex(data[i])
             types.append('int256')
     data_abi += abi.encode_abi(types, data).encode('hex')
 
@@ -84,10 +85,7 @@ class Api(object):
     def balance_at(self, address):
         params = [address]
         balance = self._rpc_post('eth_balanceAt', params)
-        if balance == "0x":
-            return 0
-        else:
-            return int(balance, 16)
+        return unhex(balance)
 
     def block(self, nr):
         params = [nr]
@@ -125,7 +123,7 @@ class Api(object):
 
     def is_contract_at(self, address):
         params = [address]
-        return int(self._rpc_post('eth_codeAt', params), 16) != 0
+        return unhex(self._rpc_post('eth_codeAt', params)) != 0
 
     def is_listening(self):
         return self._rpc_post('eth_listening', None)

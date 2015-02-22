@@ -108,9 +108,15 @@ def test_is_contract_at_contract_exists(mocker):
     assert mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
                     rpc_method='eth_codeAt', rpc_params=[address])
 
-def test_is_contract_at_contract_doesnt_exists(mocker):
+def test_is_contract_at_contract_doesnt_exists_cpp_client(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0x0000000000000000000000000000000000000000000000000000000000000000'
+    assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
+                        rpc_method='eth_codeAt', rpc_params=[address])
+
+def test_is_contract_at_contract_doesnt_exists_go_client(mocker):
+    address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
+    code = '0x'
     assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
                         rpc_method='eth_codeAt', rpc_params=[address])
 
