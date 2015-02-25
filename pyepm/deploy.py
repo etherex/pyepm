@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-18 02:26:28
+# @Last Modified time: 2015-02-25 17:47:08
 
 import logging
 
@@ -115,7 +115,7 @@ class Deploy(object):
                         if key == 'transact':
                             self.transact(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
                         elif key == 'call':
-                            self.call(to, from_, fun_name, sig, data, gas, gas_price, wait)
+                            self.call(to, from_, fun_name, sig, data, gas, gas_price)
 
     def compile_solidity(self, contract, contract_names=[]):
         subprocess.call(["solc", "--input-file", contract, "--binary", "file"])
@@ -132,6 +132,7 @@ class Deploy(object):
 
     def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
         instance = api.Api(self.config)
+
         contract_addresses = []
         if contract[-3:] == 'sol' or contract_names:
             contracts = self.compile_solidity(contract, contract_names)
@@ -140,14 +141,22 @@ class Deploy(object):
                     logger.debug("%s: %s" % (contract_name, contract))
                     contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
                     contract_addresses.append(contract_address)
-                    logger.info("      Contract '%s' is available at %s" % (contract_name, contract_address))
+                    logger.info("      Contract '%s' will be available at %s" % (contract_name, contract_address))
+                    instance.wait_for_contract(
+                        address=contract_address,
+                        verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
             else:
                 contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
-                logger.info("      Contract is available at %s" % contract_address)
+                logger.info("      Contract will be available at %s" % contract_address)
         else:
             contract = compile(open(contract).read()).encode('hex')
             contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
-            logger.info("      Contract is available at %s" % contract_address)
+            logger.info("      Contract will be available at %s" % contract_address)
+
+        instance.wait_for_contract(
+            address=contract_address,
+            verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+
         if wait:
             instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
@@ -157,17 +166,24 @@ class Deploy(object):
 
     def transact(self, to, from_, fun_name, sig, data, gas, gas_price, value, wait):
         instance = api.Api(self.config)
+        instance.setDefaultBlock(0)
+        from_count = instance.transaction_count()
+
         result = instance.transact(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
         logger.info("      Result: %s" % (result if result else "OK"))
+
+        instance.wait_for_transaction(
+            from_count=from_count,
+            verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+
         if wait:
             instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
-    def call(self, to, from_, fun_name, sig, data, gas, gas_price, wait):
+    def call(self, to, from_, fun_name, sig, data, gas, gas_price):
         instance = api.Api(self.config)
+
         result = instance.call(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price)
         logger.info("      Result: %s" % result)
-        if wait:
-            instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
         return result
 

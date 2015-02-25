@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-20 18:58:29
+# @Last Modified time: 2015-02-25 17:50:15
 
 import json
 import logging
@@ -90,6 +90,20 @@ class Api(object):
     def block(self, nr):
         params = [nr]
         return self._rpc_post('eth_blockByNumber', params)
+
+    def defaultBlock(self):
+        params = []
+        return self._rpc_post('eth_defaultBlock', params)
+
+    def setDefaultBlock(self, nr):
+        params = [nr]
+        return self._rpc_post('eth_setDefaultBlock', params)
+
+    def transaction_count(self, address=None):
+        if address is None:
+            address = "0x" + self.address
+        params = [address]
+        return self._rpc_post('eth_countAt', params)
 
     def check(self, addresses):
         params = {
@@ -203,6 +217,50 @@ class Api(object):
             'gasPrice': str(gas_price)}]
         r = self._rpc_post('eth_call', params)
         return decode_datalist(r[2:].decode('hex'))
+
+    def wait_for_transaction(self, from_count=None, verbose=False):
+        self.setDefaultBlock(0)
+
+        if from_count is None:
+            time.sleep(1)
+            return
+
+        if verbose:
+            sys.stdout.write('Waiting for transaction')
+            start_time = time.time()
+
+        while True:
+            if verbose:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            time.sleep(1)
+            to_count = self.transaction_count()
+            if to_count > from_count:
+                break
+
+        if verbose:
+            delta = time.time() - start_time
+            logger.info(" took %ds" % delta)
+
+    def wait_for_contract(self, address=None, verbose=False):
+        self.setDefaultBlock(0)
+
+        if verbose:
+            sys.stdout.write('Waiting for contract at %s' % address)
+            start_time = time.time()
+
+        while True:
+            if verbose:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            time.sleep(1)
+            codeat = self.is_contract_at(address)
+            if codeat:
+                break
+
+        if verbose:
+            delta = time.time() - start_time
+            logger.info(" took %ds" % delta)
 
     def wait_for_next_block(self, verbose=False):
         if verbose:
