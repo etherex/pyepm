@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-25 17:50:15
+# @Last Modified time: 2015-02-25 18:25:13
 
 import json
 import logging
@@ -263,6 +263,8 @@ class Api(object):
             logger.info(" took %ds" % delta)
 
     def wait_for_next_block(self, verbose=False):
+        self.setDefaultBlock(-1)
+
         if verbose:
             sys.stdout.write('Waiting for next block to be mined')
             start_time = time.time()
@@ -279,4 +281,4 @@ class Api(object):
 
         if verbose:
             delta = time.time() - start_time
-            logger.info("Ready! Mining took %ds" % delta)
+            logger.info(" Ready! Mining took %ds" % delta)
