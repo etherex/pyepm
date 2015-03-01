@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-02-25 17:47:08
+# @Last Modified time: 2015-03-01 11:57:34
 
 import logging
 
@@ -133,6 +133,9 @@ class Deploy(object):
     def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
         instance = api.Api(self.config)
 
+        if wait:
+            from_block = instance.last_block()
+
         contract_addresses = []
         if contract[-3:] == 'sol' or contract_names:
             contracts = self.compile_solidity(contract, contract_names)
@@ -158,7 +161,7 @@ class Deploy(object):
             verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
         if wait:
-            instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+            instance.wait_for_next_block(from_block=from_block, verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
         if contract_addresses:
             return contract_addresses
@@ -168,6 +171,8 @@ class Deploy(object):
         instance = api.Api(self.config)
         instance.setDefaultBlock(0)
         from_count = instance.transaction_count()
+        if wait:
+            from_block = instance.last_block()
 
         result = instance.transact(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
         logger.info("      Result: %s" % (result if result else "OK"))
@@ -177,7 +182,7 @@ class Deploy(object):
             verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
         if wait:
-            instance.wait_for_next_block(verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+            instance.wait_for_next_block(from_block=from_block, verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
     def call(self, to, from_, fun_name, sig, data, gas, gas_price):
         instance = api.Api(self.config)
