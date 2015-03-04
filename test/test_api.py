@@ -102,6 +102,17 @@ def test_create(mocker):
     assert mock_rpc(mocker, 'create', [code], json_result=address,
                     rpc_method='eth_transact', rpc_params=rpc_params) == address
 
+def test_logs(mocker):
+    filter = {'address': '0x77045e71a7a2c50903d88e564cd72fab11e82051'}
+    logs = [
+        {'address': '0x77045e71a7a2c50903d88e564cd72fab11e82051',
+                    'data': '0x00000000000000000000000077045e71a7a2c50903d88e564cd72fab11e82051',
+                    'hash': '0x13f31e4ca94e117c4cd80d3577f87145ea626a262ecb784f7000b090de92043f',
+                    'number': 1,
+                    'topic': ['0x000000000000000000000000cd2a3d9f938e13cd947ec05abc7fe734df8dd826']}]
+    assert mock_rpc(mocker, 'logs', [filter], json_result=logs,
+                    rpc_method='eth_logs', rpc_params=[filter]) == logs
+
 def test_is_contract_at_contract_exists(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0xdeadbeef'
