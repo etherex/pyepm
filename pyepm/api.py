@@ -160,6 +160,10 @@ class Api(object):
         }
         return self._rpc_post('eth_lll', params)
 
+    def logs(self, filter):
+        params = [filter]
+        return self._rpc_post('eth_logs', params)
+
     def number(self):
         return self._rpc_post('eth_number', None)
 
