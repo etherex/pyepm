@@ -98,7 +98,7 @@ class Deploy(object):
                                     for i, d in enumerate(dat):
                                         if isinstance(d, (basestring)) and not d.startswith("0x") and not d.startswith("$"):
                                             if d != d.decode('string_escape'):
-                                                definition[key][name][option] = [d.decode('string_escape')]
+                                                definition[key][name][option][i] = d.decode('string_escape')
                                             else:
                                                 padded = "0x" + d.encode('hex')
                                                 definition[key][name][option][i] = u"%s" % padded
