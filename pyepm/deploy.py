@@ -97,9 +97,12 @@ class Deploy(object):
                                 if isinstance(dat, list):
                                     for i, d in enumerate(dat):
                                         if isinstance(d, (basestring)) and not d.startswith("0x") and not d.startswith("$"):
-                                            padded = "0x" + d.encode('hex')
-                                            definition[key][name][option][i] = u"%s" % padded
-                                            logger.info("  Converting '%s' string to %s" % (d, padded))
+                                            if d != d.decode('string_escape'):
+                                                definition[key][name][option][i] = d.decode('string_escape')
+                                            else:
+                                                padded = "0x" + d.encode('hex')
+                                                definition[key][name][option][i] = u"%s" % padded
+                                                logger.info("  Converting '%s' string to %s" % (d, padded))
                                 data = definition[key][name][option]
                             if option == 'gas':
                                 gas = definition[key][name][option]
