@@ -134,7 +134,7 @@ def test_is_contract_at_contract_doesnt_exists_go_client(mocker):
 @solc
 def test_create_solidity(mocker):
     contract = 'test/fixtures/config.sol'
-    deployment = deploy.Deploy(contract, config)
+    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
     contracts = deployment.compile_solidity(contract, ['Config', 'mortal', 'owned'])
 
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
@@ -228,3 +228,97 @@ def test_call_returning_array(mocker):
                    'gasPrice': '10000000000000'}]
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3
+
+def test_load_yaml():
+    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
+    result = deployment.load_yaml()
+    assert result == [
+        {
+            "set": {
+                "NameReg": "0x72ba7d8e73fe8eb666ea66babc8116a41bfb10e2"
+            }
+        },
+        {
+            "deploy": {
+                "NameCoin": {
+                    "contract": "namecoin.se",
+                    "wait": False
+                },
+                "Subcurrency": {
+                    "contract": "subcurrency.se",
+                    "endowment": 1000000000000000000,
+                    "gas": 100000
+                }
+            }
+        },
+        {
+            "transact": {
+                "NameReg": {
+                    "fun_name": "register",
+                    "sig": "i",
+                    "gas": 10000,
+                    "gas_price": 10000000000000,
+                    "to": "$NameReg",
+                    "value": 0,
+                    "data": [
+                        "$Subcurrency"
+                    ],
+                    "wait": False
+                }
+            }
+        },
+        {
+            'transact': {
+                'TestEncoding': {
+                    'fun_name': 'some_method',
+                    'sig': 'iii',
+                    'gas': 10000,
+                    'gas_price': 10000000000000,
+                    'to': '$NameReg',
+                    'value': 0,
+                    'data': [
+                        '$Subcurrency',
+                        42,
+                        '\x01\x00'],
+                    'wait': False
+                }
+            }
+        },
+        {
+            "call": {
+                "GetMarket": {
+                    "fun_name": "get_market",
+                    "sig": "i",
+                    "to": "0x77045e71a7a2c50903d88e564cd72fab11e82051",
+                    "data": [
+                        1
+                    ]
+                }
+            }
+        },
+        {
+            "deploy": {
+                "extra": {
+                    "contract": "short_namecoin.se"
+                }
+            }
+        },
+        {
+            "deploy": {
+                "Config": {
+                    "contract": "config.sol",
+                    "solidity": [
+                        "Config",
+                        "mortal",
+                        "owned"
+                    ]
+                }
+            }
+        }
+    ]
+
+def test_deploy(mocker):
+    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
+    mocker.patch('requests.post', return_value=mock_json_response(status_code=200, result=None))
+    # with pytest.raises(api.ApiException) as excinfo:
+    deployment.deploy()

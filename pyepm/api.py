@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-03-01 12:01:16
+# @Last Modified time: 2015-03-06 22:24:27
 
 import json
 import logging
@@ -85,7 +85,9 @@ class Api(object):
     def balance_at(self, address):
         params = [address]
         balance = self._rpc_post('eth_balanceAt', params)
-        return unhex(balance)
+        if balance is not None:
+            return unhex(balance)
+        return 0
 
     def block(self, nr):
         params = [nr]
@@ -137,7 +139,10 @@ class Api(object):
 
     def is_contract_at(self, address):
         params = [address]
-        return unhex(self._rpc_post('eth_codeAt', params)) != 0
+        result = self._rpc_post('eth_codeAt', params)
+        if result is not None:
+            return unhex(result) != 0
+        return True
 
     def is_listening(self):
         return self._rpc_post('eth_listening', None)
@@ -220,7 +225,9 @@ class Api(object):
             'gas': str(gas),
             'gasPrice': str(gas_price)}]
         r = self._rpc_post('eth_call', params)
-        return decode_datalist(r[2:].decode('hex'))
+        if r is not None:
+            return decode_datalist(r[2:].decode('hex'))
+        return []
 
     def wait_for_transaction(self, from_count=None, verbose=False):
         self.setDefaultBlock(0)

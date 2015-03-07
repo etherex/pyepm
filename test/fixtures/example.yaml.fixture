@@ -7,7 +7,7 @@
   deploy:
     NameCoin:
       contract: namecoin.se
-      wait: True
+      wait: False
     Subcurrency:
       contract: subcurrency.se
       gas: 100000
@@ -25,7 +25,21 @@
       gas: 10000
       gas_price: 10000000000000
       value: 0
-      wait: True
+      wait: False
+-
+  transact:
+    TestEncoding:
+      to: $NameReg
+      fun_name: some_method
+      sig: iii
+      data:
+        - $Subcurrency
+        - 42
+        - "\x01\x00"
+      gas: 10000
+      gas_price: 10000000000000
+      value: 0
+      wait: False
 -
 # Contract calls with return values
   call:
