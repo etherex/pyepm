@@ -320,5 +320,9 @@ def test_load_yaml():
 def test_deploy(mocker):
     deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
     mocker.patch('requests.post', return_value=mock_json_response(status_code=200, result=None))
-    # with pytest.raises(api.ApiException) as excinfo:
-    deployment.deploy()
+    if not spawn.find_executable("solc"):
+        with pytest.raises(Exception) as excinfo:
+            deployment.deploy()
+        assert excinfo.value.message == 'solc compiler not found'
+    else:
+        deployment.deploy()

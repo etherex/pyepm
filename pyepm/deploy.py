@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-03-01 11:57:34
+# @Last Modified time: 2015-03-06 22:59:46
 
 import logging
 
@@ -12,6 +12,7 @@ import api
 import json
 import yaml
 import subprocess
+from distutils import spawn
 from serpent import compile
 
 logger = logging.getLogger(__name__)
@@ -121,8 +122,12 @@ class Deploy(object):
                             self.call(to, from_, fun_name, sig, data, gas, gas_price)
 
     def compile_solidity(self, contract, contract_names=[]):
+        if not spawn.find_executable("solc"):
+            raise Exception("solc compiler not found")
+
         subprocess.call(["solc", "--input-file", contract, "--binary", "file"])
         contracts = []
+
         if not isinstance(contract_names, list):
             raise Exception("Contract names must be list")
         if not contract_names:
@@ -131,6 +136,7 @@ class Deploy(object):
             filename = "%s.binary" % contract_name
             evm = "0x" + open(filename).read()
             contracts.append((contract_name, evm))
+
         return contracts
 
     def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
