@@ -24,8 +24,8 @@ class Deploy(object):
 
     def deploy(self, wait=False):
         default_from = self.config.get('api', 'address')
-        default_gas = int(self.config.get('deploy', 'gas'))
-        default_gas_price = int(self.config.get('deploy', 'gas_price'))
+        default_gas = int(self.config.getint('deploy', 'gas'))
+        default_gas_price = int(self.config.getint('deploy', 'gas_price'))
 
         # Load YAML definitions
         definitions = self.load_yaml()
@@ -60,11 +60,11 @@ class Deploy(object):
                             if option == 'from':
                                 from_ = definition[key][name][option]
                             if option == 'gas':
-                                gas = definition[key][name][option]
+                                gas = int(definition[key][name][option])
                             if option == 'gas_price':
-                                gas_price = definition[key][name][option]
+                                gas_price = int(definition[key][name][option])
                             if option == 'endowment':
-                                value = definition[key][name][option]
+                                value = int(definition[key][name][option])
                             if option == 'wait':
                                 wait = definition[key][name][option]
                         logger.info("    Deploying %s..." % os.path.join(path, contract))
@@ -106,11 +106,11 @@ class Deploy(object):
                                                 logger.info("  Converting '%s' string to %s" % (d, padded))
                                 data = definition[key][name][option]
                             if option == 'gas':
-                                gas = definition[key][name][option]
+                                gas = int(definition[key][name][option])
                             if option == 'gas_price':
-                                gas_price = definition[key][name][option]
+                                gas_price = int(definition[key][name][option])
                             if option == 'value':
-                                value = definition[key][name][option]
+                                value = int(definition[key][name][option])
                             if option == 'wait':
                                 wait = definition[key][name][option]
                         logger.info("    %s to %s (%s)..." % ("Transaction" if key == 'transact' else "Call", name, to))
@@ -178,8 +178,7 @@ class Deploy(object):
 
     def transact(self, to, from_, fun_name, sig, data, gas, gas_price, value, wait):
         instance = api.Api(self.config)
-        instance.setDefaultBlock(0)
-        from_count = instance.transaction_count()
+        from_count = instance.transaction_count('pending')
         if wait:
             from_block = instance.last_block()
 
