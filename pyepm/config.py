@@ -22,7 +22,7 @@ config_template = """
 # JSONRPC host and port
 host = 127.0.0.1
 port = 8080
-address = cd2a3d9f938e13cd947ec05abc7fe734df8dd826
+address = 0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826
 
 [deploy]
 gas = 10000

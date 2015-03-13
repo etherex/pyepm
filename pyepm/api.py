@@ -193,6 +193,7 @@ class Api(object):
             from_ = self.address
 
         params = [{
+            'from': from_,
             'to': dest,
             'data': data,
             'gas': hex(gas).rstrip('L'),
@@ -215,6 +216,7 @@ class Api(object):
             from_ = self.address
 
         params = [{
+            'from': from_,
             'to': dest,
             'data': data,
             'gas': hex(gas).rstrip('L'),
