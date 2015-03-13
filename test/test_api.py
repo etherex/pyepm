@@ -12,6 +12,8 @@ base_json_response = {u'jsonrpc': u'2.0', u'id': u'c7c427a5-b6e9-4dbf-b218-a6f9d
 
 solc = pytest.mark.skipif(not spawn.find_executable("solc"), reason="solc compiler not found")
 
+COW_ADDRESS = '0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826'
+
 def mock_json_response(status_code=200, error=None, result=None):
     m = mock.MagicMock(spec=requests.Response)
     m.status_code = status_code
@@ -96,7 +98,7 @@ def test_create(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     rpc_params = [{'gas': hex(10000),
                    'data': '0xdeadbeef',
-                   'from': 'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+                   'from': COW_ADDRESS,
                    'value': hex(0),
                    'gasPrice': hex(10000000000000)}]
     assert mock_rpc(mocker, 'create', [code], json_result=address,
@@ -141,7 +143,7 @@ def test_create_solidity(mocker):
     for contract_name, code in contracts:
         rpc_params = [{'gas': hex(10000),
                        'data': code,
-                       'from': 'cd2a3d9f938e13cd947ec05abc7fe734df8dd826',
+                       'from': COW_ADDRESS,
                        'value': hex(0),
                        'gasPrice': hex(10000000000000)}]
         assert mock_rpc(mocker, 'create', [code], json_result=address,
@@ -191,6 +193,7 @@ def test_storage_at(mocker):
 def test_transact(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     rpc_params = [{'gas': hex(10000),
+                   'from': COW_ADDRESS,
                    'to': address,
                    'data': None,
                    'value': hex(0),
@@ -206,6 +209,7 @@ def test_call_multiply(mocker):
     data_abi = '0x1df4f1440000000000000000000000000000000000000000000000000000000000000003'
     json_result = '0x0000000000000000000000000000000000000000000000000000000000000015'
     rpc_params = [{'gas': hex(10000),
+                   'from': COW_ADDRESS,
                    'to': address,
                    'data': data_abi,
                    'gasPrice': hex(10000000000000)}, 'latest']
@@ -223,6 +227,7 @@ def test_call_returning_array(mocker):
                   '0000000000000000000000000000000000000000000000000000000000000001' +\
                   '0000000000000000000000000000000000000000000000000000000000000000'
     rpc_params = [{'gas': hex(10000),
+                   'from': COW_ADDRESS,
                    'to': address,
                    'data': data_abi,
                    'gasPrice': hex(10000000000000)}, 'latest']
