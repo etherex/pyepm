@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-03-06 22:59:46
+# @Last Modified time: 2015-03-14 22:40:37
 
 import logging
 
@@ -141,7 +141,7 @@ class Deploy(object):
 
     def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
         instance = api.Api(self.config)
-
+        from_count = instance.transaction_count(defaultBlock='pending')
         if wait:
             from_block = instance.last_block()
 
@@ -154,8 +154,8 @@ class Deploy(object):
                     contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
                     contract_addresses.append(contract_address)
                     logger.info("      Contract '%s' will be available at %s" % (contract_name, contract_address))
-                    instance.wait_for_contract(
-                        address=contract_address,
+                    instance.wait_for_transaction(
+                        from_count=from_count,
                         verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
             else:
                 contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
@@ -165,8 +165,8 @@ class Deploy(object):
             contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
             logger.info("      Contract will be available at %s" % contract_address)
 
-        instance.wait_for_contract(
-            address=contract_address,
+        instance.wait_for_transaction(
+            from_count=from_count,
             verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
         if wait:
@@ -178,7 +178,7 @@ class Deploy(object):
 
     def transact(self, to, from_, fun_name, sig, data, gas, gas_price, value, wait):
         instance = api.Api(self.config)
-        from_count = instance.transaction_count('pending')
+        from_count = instance.transaction_count(defaultBlock='pending')
         if wait:
             from_block = instance.last_block()
 

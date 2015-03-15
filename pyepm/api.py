@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-03-06 22:24:27
+# @Last Modified time: 2015-03-14 22:36:36
 
 import json
 import logging
@@ -134,7 +134,7 @@ class Api(object):
 
     def is_contract_at(self, address, defaultBlock='latest'):
         params = [address, defaultBlock]
-        result = self._rpc_post('eth_getData', params)
+        result = self._rpc_post('eth_getCode', params)
         if result is not None:
             return unhex(result) != 0
         return True
@@ -171,12 +171,11 @@ class Api(object):
         return unhex(self._rpc_post('net_peerCount', None))
 
     def state_at(self, address, index, defaultBlock='latest'):
+        raise DeprecationWarning('the method `stateAt` is no longer available in the JSON RPC API, use `eth_getStorageAt` (`storage_at` in PyEPM) instead.')
+
+    def storage_at(self, address, index, defaultBlock='latest'):
         params = [address, index, defaultBlock]
         return self._rpc_post('eth_getStorageAt', params)
-
-    def storage_at(self, address, defaultBlock='latest'):
-        params = [address, defaultBlock]
-        return self._rpc_post('eth_getStorage', params)
 
     def transact(self, dest, fun_name=None, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
         if not dest.startswith('0x'):
@@ -240,26 +239,8 @@ class Api(object):
                 sys.stdout.write('.')
                 sys.stdout.flush()
             time.sleep(1)
-            to_count = self.transaction_count('pending')
+            to_count = self.transaction_count(defaultBlock='pending')
             if to_count > from_count:
-                break
-
-        if verbose:
-            delta = time.time() - start_time
-            logger.info(" took %ds" % delta)
-
-    def wait_for_contract(self, address=None, verbose=False):
-        if verbose:
-            sys.stdout.write('Waiting for contract at %s' % address)
-            start_time = time.time()
-
-        while True:
-            if verbose:
-                sys.stdout.write('.')
-                sys.stdout.flush()
-            time.sleep(1)
-            codeat = self.is_contract_at(address, 'pending')
-            if codeat:
                 break
 
         if verbose:

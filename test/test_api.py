@@ -73,7 +73,7 @@ def test_coinbase(mocker):
 def test_create(mocker):
     code = '0xdeadbeef'
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
-    rpc_params = [{'gas': hex(10000),
+    rpc_params = [{'gas': hex(100000),
                    'data': '0xdeadbeef',
                    'from': COW_ADDRESS,
                    'value': hex(0),
@@ -96,19 +96,19 @@ def test_is_contract_at_contract_exists(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0xdeadbeef'
     assert mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
-                    rpc_method='eth_getData', rpc_params=[address, 'latest'])
+                    rpc_method='eth_getCode', rpc_params=[address, 'latest'])
 
 def test_is_contract_at_contract_doesnt_exists_cpp_client(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0x0000000000000000000000000000000000000000000000000000000000000000'
     assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
-                        rpc_method='eth_getData', rpc_params=[address, 'latest'])
+                        rpc_method='eth_getCode', rpc_params=[address, 'latest'])
 
 def test_is_contract_at_contract_doesnt_exists_go_client(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
     code = '0x'
     assert not mock_rpc(mocker, 'is_contract_at', [address], json_result=code,
-                        rpc_method='eth_getData', rpc_params=[address, 'latest'])
+                        rpc_method='eth_getCode', rpc_params=[address, 'latest'])
 
 def test_is_listening(mocker):
     assert mock_rpc(mocker, 'is_listening', [], json_result=True,
@@ -126,20 +126,15 @@ def test_peer_count(mocker):
     assert mock_rpc(mocker, 'peer_count', [], json_result=hex(8),
                     rpc_method='net_peerCount', rpc_params=None) == 8
 
-def test_state_at(mocker):
-    address = "0x407d73d8a49eeb85d32cf465507dd71d507100c1"
-    idx = 1
-    assert mock_rpc(mocker, 'state_at', [address, idx], json_result='0x03',
-                    rpc_method='eth_getStorageAt', rpc_params=[address, idx, 'latest']) == '0x03'
-
 def test_storage_at(mocker):
     address = "0x407d73d8a49eeb85d32cf465507dd71d507100c1"
-    assert mock_rpc(mocker, 'storage_at', [address], json_result={'0x': '0x03'},
-                    rpc_method='eth_getStorage', rpc_params=[address, 'latest']) == {'0x': '0x03'}
+    idx = 1
+    assert mock_rpc(mocker, 'storage_at', [address, idx], json_result={'0x03'},
+                    rpc_method='eth_getStorageAt', rpc_params=[address, idx, 'latest']) == {'0x03'}
 
 def test_transact(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
-    rpc_params = [{'gas': hex(10000),
+    rpc_params = [{'gas': hex(100000),
                    'from': COW_ADDRESS,
                    'to': address,
                    'data': None,
@@ -155,7 +150,7 @@ def test_call_multiply(mocker):
     data = [3]
     data_abi = '0x1df4f1440000000000000000000000000000000000000000000000000000000000000003'
     json_result = '0x0000000000000000000000000000000000000000000000000000000000000015'
-    rpc_params = [{'gas': hex(10000),
+    rpc_params = [{'gas': hex(100000),
                    'from': COW_ADDRESS,
                    'to': address,
                    'data': data_abi,
@@ -173,7 +168,7 @@ def test_call_returning_array(mocker):
                   '0000000000000000000000000000000000000000000000000000000000000002' +\
                   '0000000000000000000000000000000000000000000000000000000000000001' +\
                   '0000000000000000000000000000000000000000000000000000000000000000'
-    rpc_params = [{'gas': hex(10000),
+    rpc_params = [{'gas': hex(100000),
                    'from': COW_ADDRESS,
                    'to': address,
                    'data': data_abi,
