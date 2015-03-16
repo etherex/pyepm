@@ -174,7 +174,7 @@ class Api(object):
         raise DeprecationWarning('the method `stateAt` is no longer available in the JSON RPC API, use `eth_getStorageAt` (`storage_at` in PyEPM) instead.')
 
     def storage_at(self, address, index, defaultBlock='latest'):
-        params = [address, index, defaultBlock]
+        params = [address, hex(index), defaultBlock]
         return self._rpc_post('eth_getStorageAt', params)
 
     def transact(self, dest, fun_name=None, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
@@ -224,6 +224,24 @@ class Api(object):
         if r is not None:
             return decode_datalist(r[2:].decode('hex'))
         return []
+
+    def wait_for_contract(self, address, verbose=False, defaultBlock='latest'):
+        if verbose:
+            sys.stdout.write('Waiting for contract at %s' % address)
+            start_time = time.time()
+
+        while True:
+            if verbose:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            time.sleep(1)
+            codeat = self.is_contract_at(address, defaultBlock)
+            if codeat:
+                break
+
+        if verbose:
+            delta = time.time() - start_time
+            logger.info(" took %ds" % delta)
 
     def wait_for_transaction(self, from_count=None, verbose=False):
         if from_count is None:

@@ -130,7 +130,7 @@ def test_storage_at(mocker):
     address = "0x407d73d8a49eeb85d32cf465507dd71d507100c1"
     idx = 1
     assert mock_rpc(mocker, 'storage_at', [address, idx], json_result={'0x03'},
-                    rpc_method='eth_getStorageAt', rpc_params=[address, idx, 'latest']) == {'0x03'}
+                    rpc_method='eth_getStorageAt', rpc_params=[address, hex(idx), 'latest']) == {'0x03'}
 
 def test_transact(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
