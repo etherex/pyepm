@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-03-14 22:36:36
+# @Last Modified time: 2015-04-03 14:56:23
 
 import json
 import logging
@@ -54,7 +54,11 @@ class Api(object):
         self.jsonrpc_url = "http://%s:%s" % (self.host, self.port)
         logger.debug("Deploying to %s" % self.jsonrpc_url)
 
-        self.address = config.get("api", "address")
+        address = config.get("api", "address")
+        if not address.startswith('0x'):
+            address = '0x' + address
+        self.address = address
+
         self.gas = config.getint("deploy", "gas")
         self.gas_price = config.getint("deploy", "gas_price")
 
@@ -101,9 +105,15 @@ class Api(object):
 
     def transaction_count(self, address=None, defaultBlock='latest'):
         if address is None:
-            address = "0x" + self.address
-        params = [address, defaultBlock]
-        return self._rpc_post('eth_getTransactionCount', params)
+            address = self.address
+        params = [str(address), defaultBlock]
+        try:
+            count = int(self._rpc_post('eth_getTransactionCount', params), 16)
+            logger.debug("Tx count: %s" % count)
+        except Exception as e:
+            logger.debug("Failed Tx count, returning 0: %s" % e)
+            count = 0
+        return count
 
     def check(self):
         raise DeprecationWarning('the method `check` is no longer available')
