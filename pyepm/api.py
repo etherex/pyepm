@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-04-03 15:27:26
+# @Last Modified time: 2015-04-03 15:32:04
 
 import json
 import logging
@@ -273,7 +273,7 @@ class Api(object):
             time.sleep(1)
             to_count = self.transaction_count(defaultBlock='pending')
             if to_count is None:
-                break;
+                break
             if to_count > from_count:
                 break
 
