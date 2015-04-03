@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-04-03 14:56:23
+# @Last Modified time: 2015-04-03 15:27:26
 
 import json
 import logging
@@ -108,11 +108,15 @@ class Api(object):
             address = self.address
         params = [str(address), defaultBlock]
         try:
-            count = int(self._rpc_post('eth_getTransactionCount', params), 16)
+            hexcount = self._rpc_post('eth_getTransactionCount', params)
+            if hexcount is not None:
+                count = int(hexcount, 16)
+            else:
+                return None
             logger.debug("Tx count: %s" % count)
         except Exception as e:
-            logger.debug("Failed Tx count, returning 0: %s" % e)
-            count = 0
+            logger.info("Failed Tx count, returning None: %s" % e)
+            count = None
         return count
 
     def check(self):
@@ -268,6 +272,8 @@ class Api(object):
                 sys.stdout.flush()
             time.sleep(1)
             to_count = self.transaction_count(defaultBlock='pending')
+            if to_count is None:
+                break;
             if to_count > from_count:
                 break
 
