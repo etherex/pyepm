@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-03-14 22:19:39
+# @Last Modified time: 2015-04-04 23:55:17
 
 import os
 import StringIO
@@ -27,6 +27,7 @@ address = 0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826
 [deploy]
 gas = 100000
 gas_price = 10000000000000
+fixed_price = False
 
 [misc]
 config_dir = {0}

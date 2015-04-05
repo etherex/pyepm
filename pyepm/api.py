@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-04-03 15:32:04
+# @Last Modified time: 2015-04-05 01:22:52
 
 import json
 import logging
@@ -61,6 +61,7 @@ class Api(object):
 
         self.gas = config.getint("deploy", "gas")
         self.gas_price = config.getint("deploy", "gas_price")
+        self.fixed_price = config.getboolean("deploy", "fixed_price")
 
     def _rpc_post(self, method, params):
         payload = {
@@ -110,7 +111,7 @@ class Api(object):
         try:
             hexcount = self._rpc_post('eth_getTransactionCount', params)
             if hexcount is not None:
-                count = int(hexcount, 16)
+                count = unhex(hexcount)
             else:
                 return None
             logger.debug("Tx count: %s" % count)
@@ -125,6 +126,13 @@ class Api(object):
     def coinbase(self):
         return self._rpc_post('eth_coinbase', None)
 
+    def gasprice(self):
+        result = self._rpc_post('eth_gasPrice', None)
+        logger.info("Got gas price: %s" % result)
+        if result is not None:
+            return unhex(result)
+        return None
+
     def create(self, code, from_=None, gas=None, gas_price=None, endowment=0):
         if not code.startswith('0x'):
             code = '0x' + code
@@ -136,6 +144,13 @@ class Api(object):
             gas_price = self.gas_price
         if from_ is None:
             from_ = self.address
+        if not self.fixed_price:
+            net_price = self.gasprice()
+            logger.info("Gas price: %s" % net_price)
+            if net_price is None:
+                gas_price = self.gas_price
+            else:
+                gas_price = net_price
 
         params = [{
             'data': code,
@@ -204,6 +219,13 @@ class Api(object):
             gas_price = self.gas_price
         if from_ is None:
             from_ = self.address
+        if not self.fixed_price:
+            net_price = self.gasprice()
+            logger.info("Gas price: %s" % net_price)
+            if net_price is None:
+                gas_price = self.gas_price
+            else:
+                gas_price = net_price
 
         params = [{
             'from': from_,
@@ -214,26 +236,20 @@ class Api(object):
             'value': hex(value).rstrip('L')}]
         return self._rpc_post('eth_sendTransaction', params)
 
-    def call(self, dest, fun_name, sig='', data=None, gas=None, gas_price=None, from_=None, defaultBlock='latest'):
+    def call(self, dest, fun_name, sig='', data=None, from_=None, defaultBlock='latest'):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
             data = abi_data(fun_name, sig, data)
 
-        if gas is None:
-            gas = self.gas
-        if gas_price is None:
-            gas_price = self.gas_price
         if from_ is None:
             from_ = self.address
 
         params = [{
             'from': from_,
             'to': dest,
-            'data': data,
-            'gas': hex(gas).rstrip('L'),
-            'gasPrice': hex(gas_price).rstrip('L')}, defaultBlock]
+            'data': data}, defaultBlock]
         r = self._rpc_post('eth_call', params)
         if r is not None:
             return decode_datalist(r[2:].decode('hex'))

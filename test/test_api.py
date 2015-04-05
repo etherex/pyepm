@@ -70,6 +70,11 @@ def test_coinbase(mocker):
     assert mock_rpc(mocker, 'coinbase', [], json_result=coinbase,
                     rpc_method='eth_coinbase', rpc_params=None) == coinbase
 
+def test_gasprice(mocker):
+    gas_price = 10000000000000
+    assert mock_rpc(mocker, 'gasprice', [], json_result=hex(gas_price),
+                    rpc_method='eth_gasPrice', rpc_params=None) == gas_price
+
 def test_create(mocker):
     code = '0xdeadbeef'
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
@@ -77,7 +82,8 @@ def test_create(mocker):
                    'data': '0xdeadbeef',
                    'from': COW_ADDRESS,
                    'value': hex(0),
-                   'gasPrice': hex(10000000000000)}]
+                   'gasPrice': '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'}]  # bad mocking...
+    # 'gasPrice': hex(10000000000000)}]
     assert mock_rpc(mocker, 'create', [code], json_result=address,
                     rpc_method='eth_sendTransaction', rpc_params=rpc_params) == address
 
@@ -150,11 +156,9 @@ def test_call_multiply(mocker):
     data = [3]
     data_abi = '0x1df4f1440000000000000000000000000000000000000000000000000000000000000003'
     json_result = '0x0000000000000000000000000000000000000000000000000000000000000015'
-    rpc_params = [{'gas': hex(100000),
-                   'from': COW_ADDRESS,
+    rpc_params = [{'from': COW_ADDRESS,
                    'to': address,
-                   'data': data_abi,
-                   'gasPrice': hex(10000000000000)}, 'latest']
+                   'data': data_abi}, 'latest']
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [21]
 
@@ -168,10 +172,8 @@ def test_call_returning_array(mocker):
                   '0000000000000000000000000000000000000000000000000000000000000002' +\
                   '0000000000000000000000000000000000000000000000000000000000000001' +\
                   '0000000000000000000000000000000000000000000000000000000000000000'
-    rpc_params = [{'gas': hex(100000),
-                   'from': COW_ADDRESS,
+    rpc_params = [{'from': COW_ADDRESS,
                    'to': address,
-                   'data': data_abi,
-                   'gasPrice': hex(10000000000000)}, 'latest']
+                   'data': data_abi}, 'latest']
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3

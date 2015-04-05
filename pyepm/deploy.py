@@ -3,7 +3,7 @@
 # @Author: caktux
 # @Date:   2014-12-21 12:44:20
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-04-03 14:58:41
+# @Last Modified time: 2015-04-05 01:25:39
 
 import logging
 
@@ -119,7 +119,7 @@ class Deploy(object):
                         if key == 'transact':
                             self.transact(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
                         elif key == 'call':
-                            self.call(to, from_, fun_name, sig, data, gas, gas_price)
+                            self.call(to, from_, fun_name, sig, data)
 
     def compile_solidity(self, contract, contract_names=[]):
         if not spawn.find_executable("solc"):
@@ -193,10 +193,10 @@ class Deploy(object):
         if wait:
             instance.wait_for_next_block(from_block=from_block, verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
-    def call(self, to, from_, fun_name, sig, data, gas, gas_price):
+    def call(self, to, from_, fun_name, sig, data):
         instance = api.Api(self.config)
 
-        result = instance.call(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price)
+        result = instance.call(to, fun_name=fun_name, sig=sig, data=data)
         logger.info("      Result: %s" % result)
 
         return result
