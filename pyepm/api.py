@@ -3,7 +3,7 @@
 # @Author: jorisbontje
 # @Date:   2014-08-03 13:53:04
 # @Last Modified by:   caktux
-# @Last Modified time: 2015-04-05 01:22:52
+# @Last Modified time: 2015-04-05 01:37:30
 
 import json
 import logging
@@ -128,7 +128,7 @@ class Api(object):
 
     def gasprice(self):
         result = self._rpc_post('eth_gasPrice', None)
-        logger.info("Got gas price: %s" % result)
+        logger.debug("Got gas price: %s" % result)
         if result is not None:
             return unhex(result)
         return None
@@ -146,7 +146,7 @@ class Api(object):
             from_ = self.address
         if not self.fixed_price:
             net_price = self.gasprice()
-            logger.info("Gas price: %s" % net_price)
+            logger.debug("Gas price: %s" % net_price)
             if net_price is None:
                 gas_price = self.gas_price
             else:
@@ -221,7 +221,7 @@ class Api(object):
             from_ = self.address
         if not self.fixed_price:
             net_price = self.gasprice()
-            logger.info("Gas price: %s" % net_price)
+            logger.debug("Gas price: %s" % net_price)
             if net_price is None:
                 gas_price = self.gas_price
             else:
