@@ -22,7 +22,7 @@ setup(name="pyepm",
       url='https://github.com/etherex/pyepm/',
       install_requires=[
           'pyyaml',
-          'pyethereum',
+          'ethereum',
           'ethereum-serpent',
           'requests'
       ],
