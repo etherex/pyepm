@@ -12,7 +12,7 @@ import sys
 import time
 from uuid import uuid4
 
-from pyethereum import abi
+from ethereum import abi
 from serpent import get_prefix, decode_datalist
 from utils import unhex
 
