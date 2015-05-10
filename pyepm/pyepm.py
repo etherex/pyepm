@@ -24,7 +24,7 @@ def parse_arguments(parser):
     parser.add_argument(
         "-p", "--port",
         dest="port",
-        help="<port>  JSONRPC port (default: 8080).")
+        help="<port>  JSONRPC port (default: 8545).")
     parser.add_argument(
         "-a", "--address",
         dest="address",

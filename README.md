@@ -96,7 +96,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show program's version number and exit
   -r HOST, --host HOST  <host> JSONRPC host (default: 127.0.0.1).
-  -p PORT, --port PORT  <port> JSONRPC port (default: 8080).
+  -p PORT, --port PORT  <port> JSONRPC port (default: 8545).
   -a ADDRESS, --address ADDRESS
                         Set the address from which to deploy contracts.
   -g GAS, --gas GAS     Set the default amount of gas for deployment.
