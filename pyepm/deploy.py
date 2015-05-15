@@ -119,7 +119,7 @@ class Deploy(object):
                         if key == 'transact':
                             self.transact(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
                         elif key == 'call':
-                            self.call(to, from_, fun_name, sig, data)
+                            self.call(to, from_, fun_name, sig, data, gas, gas_price, value)
 
     def compile_solidity(self, contract, contract_names=[]):
         if not spawn.find_executable("solc"):
@@ -193,10 +193,10 @@ class Deploy(object):
         if wait:
             instance.wait_for_next_block(from_block=from_block, verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
 
-    def call(self, to, from_, fun_name, sig, data):
+    def call(self, to, from_, fun_name, sig, data, gas, gas_price, value):
         instance = api.Api(self.config)
 
-        result = instance.call(to, fun_name=fun_name, sig=sig, data=data)
+        result = instance.call(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
         logger.info("      Result: %s" % result)
 
         return result

@@ -213,12 +213,13 @@ class Api(object):
         if fun_name is not None:
             data = abi_data(fun_name, sig, data)
 
+        if from_ is None:
+            from_ = self.address
+
         if gas is None:
             gas = self.gas
         if gas_price is None:
             gas_price = self.gas_price
-        if from_ is None:
-            from_ = self.address
         if not self.fixed_price:
             net_price = self.gasprice()
             logger.debug("Gas price: %s" % net_price)
@@ -236,7 +237,7 @@ class Api(object):
             'value': hex(value).rstrip('L')}]
         return self._rpc_post('eth_sendTransaction', params)
 
-    def call(self, dest, fun_name, sig='', data=None, from_=None, defaultBlock='latest'):
+    def call(self, dest, fun_name, sig='', data=None, gas=None, gas_price=None, value=0, from_=None, defaultBlock='latest'):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
@@ -246,10 +247,25 @@ class Api(object):
         if from_ is None:
             from_ = self.address
 
+        if gas is None:
+            gas = self.gas
+        if gas_price is None:
+            gas_price = self.gas_price
+        if not self.fixed_price:
+            net_price = self.gasprice()
+            logger.debug("Gas price: %s" % net_price)
+            if net_price is None:
+                gas_price = self.gas_price
+            else:
+                gas_price = net_price
+
         params = [{
             'from': from_,
             'to': dest,
-            'data': data}, defaultBlock]
+            'data': data,
+            'gas': hex(gas).rstrip('L'),
+            'gasPrice': hex(gas_price).rstrip('L'),
+            'value': hex(value).rstrip('L')}, defaultBlock]
         r = self._rpc_post('eth_call', params)
         if r is not None:
             return decode_datalist(r[2:].decode('hex'))
