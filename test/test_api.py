@@ -83,8 +83,7 @@ def test_create(mocker):
                    'data': '0xdeadbeef',
                    'from': COW_ADDRESS,
                    'value': hex(0),
-                   'gasPrice': '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'}]  # bad mocking...
-    # 'gasPrice': hex(10000000000000)}]
+                   'gasPrice': hex(10000000000000)}]
     assert mock_rpc(mocker, 'create', [code], json_result=address,
                     rpc_method='eth_sendTransaction', rpc_params=rpc_params) == address
 
