@@ -22,6 +22,7 @@ def test_api_exception_status_code(mocker):
 
 def mock_rpc(mocker, rpc_fun, rpc_args, json_result, rpc_method, rpc_params):
     instance = api.Api(config)
+    instance.fixed_price = True
 
     mocker.patch('requests.post', return_value=mock_json_response(result=json_result))
     mock_rpc_post = mocker.patch.object(instance, '_rpc_post', side_effect=instance._rpc_post)
@@ -154,15 +155,18 @@ def test_call_multiply(mocker):
     fun_name = 'multiply'
     sig = 'i'
     data = [3]
+    value = 0
+    gas = 100000
+    gas_price = 10000000000000
     data_abi = '0x1df4f1440000000000000000000000000000000000000000000000000000000000000003'
     json_result = '0x0000000000000000000000000000000000000000000000000000000000000015'
-    rpc_params = [{'gas': hex(100000),
+    rpc_params = [{'gas': hex(gas),
                    'from': COW_ADDRESS,
                    'to': address,
                    'data': data_abi,
-                   'value': hex(0),
-                   'gasPrice': hex(10000000000000)}, 'latest']
-    assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
+                   'value': hex(value),
+                   'gasPrice': hex(gas_price)}, 'latest']
+    assert mock_rpc(mocker, 'call', [address, fun_name, sig, data, gas, gas_price, value], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [21]
 
 def test_call_returning_array(mocker):
@@ -175,11 +179,8 @@ def test_call_returning_array(mocker):
                   '0000000000000000000000000000000000000000000000000000000000000002' +\
                   '0000000000000000000000000000000000000000000000000000000000000001' +\
                   '0000000000000000000000000000000000000000000000000000000000000000'
-    rpc_params = [{'gas': hex(100000),
-                   'from': COW_ADDRESS,
+    rpc_params = [{'from': COW_ADDRESS,
                    'to': address,
-                   'data': data_abi,
-                   'value': hex(0),
-                   'gasPrice': hex(10000000000000)}, 'latest']
+                   'data': data_abi}, 'latest']
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3
