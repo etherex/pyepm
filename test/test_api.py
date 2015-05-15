@@ -178,8 +178,11 @@ def test_call_returning_array(mocker):
                   '0000000000000000000000000000000000000000000000000000000000000002' +\
                   '0000000000000000000000000000000000000000000000000000000000000001' +\
                   '0000000000000000000000000000000000000000000000000000000000000000'
-    rpc_params = [{'from': COW_ADDRESS,
+    rpc_params = [{'gas': hex(100000),
+                   'from': COW_ADDRESS,
                    'to': address,
-                   'data': data_abi}, 'latest']
+                   'data': data_abi,
+                   'value': hex(0),
+                   'gasPrice': hex(10000000000000)}, 'latest']
     assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3
