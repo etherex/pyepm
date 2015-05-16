@@ -17,6 +17,7 @@ from serpent import get_prefix, decode_datalist
 from utils import unhex
 
 logger = logging.getLogger(__name__)
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 def abi_data(fun_name, sig, data):
     types = []
@@ -275,23 +276,29 @@ class Api(object):
 
     def wait_for_transaction(self, from_count=None, verbose=False):
         if from_count is None:
-            time.sleep(1)
+            time.sleep(3)
             return
 
         if verbose:
             sys.stdout.write('Waiting for transaction')
             start_time = time.time()
 
+        logger.debug("From tx count: %s" % from_count)
         while True:
             if verbose:
                 sys.stdout.write('.')
                 sys.stdout.flush()
             time.sleep(1)
             to_count = self.transaction_count(defaultBlock='pending')
+            logger.debug("To tx count: %s" % to_count)
             if to_count is None:
                 break
             if to_count > from_count:
                 break
+            # Double-check if tx count somehow went back in time...
+            if to_count <= from_count:
+                time.sleep(1)
+                from_count = to_count - 1
 
         if verbose:
             delta = time.time() - start_time
