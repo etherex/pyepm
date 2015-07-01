@@ -77,7 +77,6 @@ class Deploy(object):
                         # Reset default values at each definition
                         from_ = default_from
                         to = None
-                        fun_name = None
                         sig = None
                         data = ''
                         gas = default_gas
@@ -90,7 +89,8 @@ class Deploy(object):
                             if option == 'to':
                                 to = definition[key][name][option]
                             if option == 'fun_name':
-                                fun_name = definition[key][name][option]
+                                raise DeprecationWarning("The `fun_name` definition is deprecated, use `serpent mk_signature <file>`"
+                                                         " output for your method in `sig` instead.")
                             if option == 'sig':
                                 sig = definition[key][name][option]
                             if option == 'data':
@@ -117,9 +117,9 @@ class Deploy(object):
                         if data:
                             logger.info("      with data: %s" % data)
                         if key == 'transact':
-                            self.transact(to, from_, fun_name, sig, data, gas, gas_price, value, wait)
+                            self.transact(to, from_, sig, data, gas, gas_price, value, wait)
                         elif key == 'call':
-                            self.call(to, from_, fun_name, sig, data, gas, gas_price, value)
+                            self.call(to, from_, sig, data, gas, gas_price, value)
 
     def compile_solidity(self, contract, contract_names=[]):
         if not spawn.find_executable("solc"):
@@ -141,8 +141,8 @@ class Deploy(object):
 
     def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
         instance = api.Api(self.config)
-        if wait:
-            from_block = instance.last_block()
+        from_count = instance.transaction_count(defaultBlock='pending')
+        verbose = (True if self.config.get('misc', 'verbosity') > 1 else False)
 
         contract_addresses = []
         if contract[-3:] == 'sol' or contract_names:
@@ -153,10 +153,6 @@ class Deploy(object):
                     contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
                     contract_addresses.append(contract_address)
                     logger.info("      Contract '%s' will be available at %s" % (contract_name, contract_address))
-                    instance.wait_for_contract(
-                        address=contract_address,
-                        defaultBlock='pending',
-                        verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
             else:
                 contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
                 logger.info("      Contract will be available at %s" % contract_address)
@@ -165,38 +161,39 @@ class Deploy(object):
             contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
             logger.info("      Contract will be available at %s" % contract_address)
 
-        instance.wait_for_contract(
-            address=contract_address,
-            defaultBlock='pending',
-            verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+        instance.wait_for_transaction(from_count=from_count, verbose=verbose)
 
         if wait:
-            instance.wait_for_next_block(from_block=from_block, verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+            instance.wait_for_contract(address=contract_address, verbose=verbose)
 
         if contract_addresses:
             return contract_addresses
         return contract_address
 
-    def transact(self, to, from_, fun_name, sig, data, gas, gas_price, value, wait):
+    def transact(self, to, from_, sig, data, gas, gas_price, value, wait):
         instance = api.Api(self.config)
         from_count = instance.transaction_count(defaultBlock='pending')
+        verbose = (True if self.config.get('misc', 'verbosity') > 1 else False)
         if wait:
             from_block = instance.last_block()
 
-        result = instance.transact(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
+        result = instance.transact(to, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
         logger.info("      Result: %s" % (result if result else "OK"))
 
         instance.wait_for_transaction(
             from_count=from_count,
-            verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+            verbose=verbose)
 
         if wait:
-            instance.wait_for_next_block(from_block=from_block, verbose=(True if self.config.get('misc', 'verbosity') > 1 else False))
+            if result.startswith("0x"):
+                instance.wait_for_transaction_mined(transactionHash=result, verbose=verbose)
+            else:
+                instance.wait_for_next_block(from_block=from_block, verbose=verbose)
 
-    def call(self, to, from_, fun_name, sig, data, gas, gas_price, value):
+    def call(self, to, from_, sig, data, gas, gas_price, value):
         instance = api.Api(self.config)
 
-        result = instance.call(to, fun_name=fun_name, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
+        result = instance.call(to, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
         logger.info("      Result: %s" % result)
 
         return result

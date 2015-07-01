@@ -19,23 +19,22 @@ from utils import unhex
 logger = logging.getLogger(__name__)
 logging.getLogger("requests").setLevel(logging.WARNING)
 
-def abi_data(fun_name, sig, data):
-    types = []
-    prefix = get_prefix(fun_name, sig)
+def abi_data(sig, data):
+    prefix = get_prefix(sig)
     data_abi = hex(prefix).rstrip('L')
+    logger.debug("ABI prefix: %s" % data_abi)
 
-    for i, s in enumerate(sig):
-        if s == 's':
-            types.append('string')
-        elif s == 'a':
-            types.append('int256[]')
-        else:
-            if isinstance(data[i], (str, unicode)) and data[i][:2] == "0x":
-                data[i] = unhex(data[i])
-            types.append('int256')
+    types = sig.split(':')[1][1:-1].split(',')
+    logger.debug("ABI types: %s" % types)
+
+    for i, s in enumerate(data):
+        if isinstance(data[i], (str, unicode)) and data[i][:2] == "0x":
+            data[i] = unhex(data[i])
+    logger.debug("ABI data: %s" % data)
+
     data_abi += abi.encode_abi(types, data).encode('hex')
+    logger.debug("ABI encoded: %s" % data_abi)
 
-    logger.debug("ABI data: %s" % data_abi)
     return data_abi
 
 class ApiException(Exception):
@@ -120,6 +119,10 @@ class Api(object):
             logger.info("Failed Tx count, returning None: %s" % e)
             count = None
         return count
+
+    def transaction(self, transactionHash, defaultBlock='latest'):
+        params = [transactionHash]
+        return self._rpc_post('eth_getTransactionByHash', params)
 
     def check(self):
         raise DeprecationWarning('the method `check` is no longer available')
@@ -207,12 +210,15 @@ class Api(object):
         params = [address, hex(index), defaultBlock]
         return self._rpc_post('eth_getStorageAt', params)
 
-    def transact(self, dest, fun_name=None, sig='', data=None, gas=None, gas_price=None, value=0, from_=None):
+    def transact(self, dest, sig=None, data=None, gas=None, gas_price=None, value=0, from_=None, fun_name=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
-            data = abi_data(fun_name, sig, data)
+            raise DeprecationWarning("The `fun_name` definition is deprecated, use `serpent mk_signature <file>`"
+                                     " output for your method in `sig` instead.")
+        if sig is not None:
+            data = abi_data(sig, data)
 
         if from_ is None:
             from_ = self.address
@@ -238,12 +244,15 @@ class Api(object):
             'value': hex(value).rstrip('L')}]
         return self._rpc_post('eth_sendTransaction', params)
 
-    def call(self, dest, fun_name, sig='', data=None, gas=None, gas_price=None, value=0, from_=None, defaultBlock='latest'):
+    def call(self, dest, sig=None, data=None, gas=None, gas_price=None, value=0, from_=None, defaultBlock='latest', fun_name=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
 
         if fun_name is not None:
-            data = abi_data(fun_name, sig, data)
+            raise DeprecationWarning("The `fun_name` definition is deprecated, use `serpent mk_signature <file>`"
+                                     " output for your method in `sig` instead.")
+        if sig is not None:
+            data = abi_data(sig, data)
 
         if from_ is None:
             from_ = self.address
@@ -319,6 +328,25 @@ class Api(object):
         if verbose:
             delta = time.time() - start_time
             logger.info(" took %ds" % delta)
+
+    def wait_for_transaction_mined(self, transactionHash, verbose):
+        if verbose:
+            sys.stdout.write('Waiting for transaction to be mined')
+            start_time = time.time()
+
+        while True:
+            if verbose:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            time.sleep(1)
+            result = self.transaction(transactionHash)
+            logger.debug("Transaction result: %s" % result)
+            if result and result['blockNumber'] is not None:
+                break
+
+        if verbose:
+            delta = time.time() - start_time
+            logger.info(" Ready! Mining took %ds" % delta)
 
     def wait_for_next_block(self, from_block=None, verbose=False):
         if verbose:

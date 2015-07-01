@@ -29,8 +29,7 @@ def test_load_yaml():
         {
             "transact": {
                 "NameReg": {
-                    "fun_name": "register",
-                    "sig": "i",
+                    "sig": "register:[int256,int256]:int256",
                     "gas": 10000,
                     "gas_price": 10000000000000,
                     "to": "$NameReg",
@@ -45,8 +44,7 @@ def test_load_yaml():
         {
             'transact': {
                 'TestEncoding': {
-                    'fun_name': 'some_method',
-                    'sig': 'iii',
+                    'sig': 'some_method:[int256,int256,int256]:int256',
                     'gas': 10000,
                     'gas_price': 10000000000000,
                     'to': '$NameReg',
@@ -62,8 +60,7 @@ def test_load_yaml():
         {
             "call": {
                 "GetMarket": {
-                    "fun_name": "get_market",
-                    "sig": "i",
+                    "sig": "get_market:[int256]:int256[]",
                     "to": "0x77045e71a7a2c50903d88e564cd72fab11e82051",
                     "data": [
                         1

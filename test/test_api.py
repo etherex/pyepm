@@ -151,8 +151,7 @@ def test_transact(mocker):
 
 def test_call_multiply(mocker):
     address = '0x6489ecbe173ac43dadb9f4f098c3e663e8438dd7'
-    fun_name = 'multiply'
-    sig = 'i'
+    sig = 'multiply:[int256]:int256'
     data = [3]
     value = 0
     gas = 100000
@@ -165,13 +164,12 @@ def test_call_multiply(mocker):
                    'data': data_abi,
                    'value': hex(value),
                    'gasPrice': hex(gas_price)}, 'latest']
-    assert mock_rpc(mocker, 'call', [address, fun_name, sig, data, gas, gas_price, value], json_result=json_result,
+    assert mock_rpc(mocker, 'call', [address, sig, data, gas, gas_price, value], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [21]
 
 def test_call_returning_array(mocker):
     address = '0x7b089cfe50c1a5fe5b0da352348a43bba81addd4'
-    fun_name = 'get_stats'
-    sig = ''
+    sig = 'get_stats:[]:int256[]'
     data = []
     data_abi = '0x61837e41'
     json_result = '0x0000000000000000000000000000000000000000000000000000000000000003' +\
@@ -184,5 +182,5 @@ def test_call_returning_array(mocker):
                    'data': data_abi,
                    'value': hex(0),
                    'gasPrice': hex(10000000000000)}, 'latest']
-    assert mock_rpc(mocker, 'call', [address, fun_name, sig, data], json_result=json_result,
+    assert mock_rpc(mocker, 'call', [address, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3
