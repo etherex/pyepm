@@ -64,6 +64,9 @@ class Api(object):
         self.fixed_price = config.getboolean("deploy", "fixed_price")
 
     def _rpc_post(self, method, params):
+        if params is None:
+            params = []
+
         payload = {
             "jsonrpc": "2.0",
             "id": str(uuid4()),
