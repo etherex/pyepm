@@ -1,9 +1,10 @@
 PyEPM
-==========
+=====
 [![Build Status](https://travis-ci.org/etherex/pyepm.svg?branch=master)](https://travis-ci.org/etherex/pyepm) [![Join the chat at https://gitter.im/etherex/pyepm](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/etherex/pyepm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Python-based EPM (Ethereum Package Manager) for Serpent 2 contract deployment using YAML for package definitions.
+Python-based EPM (Ethereum Package Manager) for Serpent 2 and Solidity contract deployment using YAML for package definitions.
 
+[![asciicast](https://asciinema.org/a/3rhk5uy1055d8neunwx26jw8r.png)](https://asciinema.org/a/3rhk5uy1055d8neunwx26jw8r)
 
 ## Installation
 `pip install pyepm`
@@ -16,7 +17,7 @@ pip install -e .
 ```
 
 ## Requirements
-[cpp-ethereum](https://github.com/ethereum/cpp-ethereum) node with JSONRPC
+Ethereum node ([go-ethereum](https://github.com/ethereum/go-ethereum), [cpp-ethereum](https://github.com/ethereum/cpp-ethereum)) with JSON RPC enabled.
 
 ## Configuration
 
@@ -36,48 +37,80 @@ You will need a package definition file in YAML format to get started (see examp
   deploy:
     NameCoin:
       contract: namecoin.se
+      retry: 15
       wait: True
+-
+  deploy:
     Subcurrency:
       contract: subcurrency.se
       gas: 100000
       endowment: 1000000000000000000
+      retry: 30
+      wait: True
 -
 # Make transactions, here we register the previously deployed
-# 'Subcurrency' contract with the global NameReg
+# 'Subcurrency' contract with the deployed NameCoin
   transact:
-    NameReg:
-      to: $NameReg
-      fun_name: register
-      sig: i
+    RegisterSubToNameCoin:
+      to: $NameCoin
+      sig: register:[int256,int256]:int256
       data:
         - $Subcurrency
-      gas: 10000
+        - SubcurrencyName
+      gas: 100000
       gas_price: 10000000000000
       value: 0
+      retry: 30
       wait: True
+-
+  transact:
+    TestEncoding:
+      to: $NameReg
+      sig: some_method:[int256,int256,int256]:int256
+      data:
+        - $Subcurrency
+        - 42
+        - "\x01\x00"
+      gas: 100000
+      gas_price: 10000000000000
+      value: 0
+      wait: False
 -
 # Contract calls with return values
   call:
-    GetMarket:
-      to: "0x77045e71a7a2c50903d88e564cd72fab11e82051"
-      fun_name: get_market
-      sig: i
+    GetNameFromNameCoin:
+      to: $NameCoin
+      sig: get_name:[int256]:int256
       data:
-        - 1
+        - $Subcurrency
 -
 # Another deploy
   deploy:
     extra:
       contract: short_namecoin.se
+      retry: 10
+      wait: True
 -
 # Deploy Solidity contract
   deploy:
-    Config:
-      contract: config.sol
+    Wallet:
+      contract: wallet.sol
       solidity:
-        - Config
-        - mortal
-        - owned
+        - multiowned
+        - daylimit
+        - multisig
+        - Wallet
+      gas: 2500000
+      retry: 30
+      wait: True
+-
+# Transact to deployed Solidity contract name
+  transact:
+    ToWallet:
+      to: $Wallet
+      sig: kill:[$Subcurrency]:int256
+      retry: 15
+      wait: True
 ```
 
 ## Usage
