@@ -5,7 +5,7 @@ from pyepm import deploy
 from helpers import config, has_solc, is_hex, mock_json_response, solc
 
 def test_load_yaml():
-    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
+    deployment = deploy.Deploy('test/fixtures/example.yaml', config)
     result = deployment.load_yaml()
     assert result == [
         {
@@ -115,7 +115,7 @@ def test_load_yaml():
     ]
 
 def test_deploy(mocker):
-    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
+    deployment = deploy.Deploy('test/fixtures/example.yaml', config)
     mocker.patch('requests.post', return_value=mock_json_response(status_code=200, result='0x01'))
     mocker.patch('time.sleep')
     if not has_solc:
@@ -127,12 +127,12 @@ def test_deploy(mocker):
 
 @solc
 def test_compile_solidity(mocker):
-    contract = 'test/fixtures/config.sol'
-    deployment = deploy.Deploy('test/fixtures/example.yaml.fixture', config)
-    contract_names = ['Config', 'mortal', 'owned']
+    contract = 'test/fixtures/wallet.sol'
+    deployment = deploy.Deploy('test/fixtures/example.yaml', config)
+    contract_names = ['multiowned', 'daylimit', 'multisig', 'Wallet']
     contracts = deployment.compile_solidity(contract, contract_names)
 
-    assert len(contracts) == 3
+    assert len(contracts) == 4
     for idx, (contract_name, code) in enumerate(contracts):
         assert contract_name == contract_names[idx]
         assert is_hex(code)
