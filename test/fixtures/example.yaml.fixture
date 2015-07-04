@@ -7,24 +7,31 @@
   deploy:
     NameCoin:
       contract: namecoin.se
-      wait: False
+      retry: 15
+      wait: True
+-
+  deploy:
     Subcurrency:
       contract: subcurrency.se
       gas: 100000
       endowment: 1000000000000000000
+      retry: 30
+      wait: True
 -
 # Make transactions, here we register the previously deployed
-# 'Subcurrency' contract with the global NameReg
+# 'Subcurrency' contract with the deployed NameCoin
   transact:
-    NameReg:
-      to: $NameReg
+    RegisterSubToNameCoin:
+      to: $NameCoin
       sig: register:[int256,int256]:int256
       data:
         - $Subcurrency
-      gas: 10000
+        - SubcurrencyName
+      gas: 100000
       gas_price: 10000000000000
       value: 0
-      wait: False
+      retry: 30
+      wait: True
 -
   transact:
     TestEncoding:
@@ -34,29 +41,43 @@
         - $Subcurrency
         - 42
         - "\x01\x00"
-      gas: 10000
+      gas: 100000
       gas_price: 10000000000000
       value: 0
       wait: False
 -
 # Contract calls with return values
   call:
-    GetMarket:
-      to: "0x77045e71a7a2c50903d88e564cd72fab11e82051"
-      sig: get_market:[int256]:int256[]
+    GetNameFromNameCoin:
+      to: $NameCoin
+      sig: get_name:[int256]:int256
       data:
-        - 1
+        - $Subcurrency
 -
 # Another deploy
   deploy:
     extra:
       contract: short_namecoin.se
+      retry: 10
+      wait: True
 -
 # Deploy Solidity contract
   deploy:
-    Config:
-      contract: config.sol
+    Wallet:
+      contract: wallet.sol
       solidity:
-        - Config
-        - mortal
-        - owned
+        - multiowned
+        - daylimit
+        - multisig
+        - Wallet
+      gas: 2500000
+      retry: 30
+      wait: True
+-
+# Transact to deployed Solidity contract name
+  transact:
+    ToWallet:
+      to: $Wallet
+      sig: kill:[$Subcurrency]:int256
+      retry: 15
+      wait: True

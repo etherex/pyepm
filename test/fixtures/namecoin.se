@@ -5,3 +5,6 @@ def register(k, v):
         return(1)
     else:
         return(0) // Otherwise do nothing
+
+def get_name(k):
+    return(self.storage[k])

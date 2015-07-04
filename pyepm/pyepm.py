@@ -10,6 +10,7 @@ import config as c
 import logging
 import logging.config
 import deploy
+from colors import colors
 from utils import config_dir, configure_logging
 from argparse import ArgumentParser
 from . import __version__
@@ -54,7 +55,6 @@ def parse_arguments(parser):
 
     return parser.parse_args()
 
-
 def create_config(parser):
     options = parse_arguments(parser)
 
@@ -88,8 +88,9 @@ def main():
 
     # Logging
     configure_logging(config.get('misc', 'logging') or '', verbosity=config.getint('misc', 'verbosity'))
-    logger.info('PyEPM %s', __version__)
-    logger.info('=====')
+    logger.info(colors.HEADER + '=====' + colors.ENDC)
+    logger.info(colors.OKGREEN + 'PyEPM ' + colors.ENDC + '%s', __version__)
+    logger.info(colors.HEADER + '=====' + colors.ENDC)
 
     logger.debug(c.dump_config(config))
 
@@ -97,9 +98,9 @@ def main():
 
     for filename in args.filename:
         if not os.path.exists(filename):
-            logger.warn("File does not exist: %s" % filename)
+            logger.warn("\nFile does not exist: %s" % filename)
         else:
-            logger.info("Deploying %s..." % filename)
+            logger.info("\nDeploying " + colors.BOLD + "%s" % filename + colors.ENDC + "...")
             deployment = deploy.Deploy(filename, config)
             deployment.deploy()
 

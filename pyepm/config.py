@@ -28,6 +28,7 @@ address = 0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826
 gas = 100000
 gas_price = 10000000000000
 fixed_price = False
+gas_price_modifier = 1.15
 
 [misc]
 config_dir = {0}

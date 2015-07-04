@@ -12,6 +12,7 @@ import api
 import json
 import yaml
 import subprocess
+from colors import colors
 from distutils import spawn
 from serpent import compile
 
@@ -30,12 +31,12 @@ class Deploy(object):
         # Load YAML definitions
         definitions = self.load_yaml()
 
-        logger.info("Parsing %s..." % self.filename)
+        logger.debug("\nParsing %s..." % self.filename)
         path = os.path.dirname(self.filename)
 
         for definition in definitions:
             for key in definition:
-                logger.info("%s: " % key)
+                logger.info(colors.HEADER + "\n%s: " % key + colors.ENDC)
 
                 if key == 'set':
                     for variable in definition[key]:
@@ -51,6 +52,8 @@ class Deploy(object):
                         gas = default_gas
                         gas_price = default_gas_price
                         value = 0
+                        retry = False
+                        skip = False
                         wait = False
                         for option in definition[key][name]:
                             if option == 'contract':
@@ -63,13 +66,26 @@ class Deploy(object):
                                 gas = int(definition[key][name][option])
                             if option == 'gas_price':
                                 gas_price = int(definition[key][name][option])
+                            if option == 'value':
+                                value = int(definition[key][name][option])
                             if option == 'endowment':
                                 value = int(definition[key][name][option])
                             if option == 'wait':
                                 wait = definition[key][name][option]
-                        logger.info("    Deploying %s..." % os.path.join(path, contract))
-                        contract_address = self.create("%s" % os.path.join(path, contract), from_, gas, gas_price, value, wait, contract_names=contract_names)
-                        definitions = self.replace(name, definitions, contract_address, True)
+                            if option == 'skip':
+                                skip = int(definition[key][name][option])
+                            if option == 'retry':
+                                retry = int(definition[key][name][option])
+                        logger.info("  Deploying " + colors.BOLD + "%s" % os.path.join(path, contract) + colors.ENDC + "...")
+                        addresses = self.create("%s" % os.path.join(path, contract),
+                                                from_, gas, gas_price, value,
+                                                retry, skip, wait,
+                                                contract_names=contract_names if contract_names else name)
+                        if isinstance(addresses, list):
+                            for address in addresses:
+                                definitions = self.replace(name, definitions, address, True)
+                        else:
+                            definitions = self.replace(name, definitions, addresses, True)
                     logger.debug(definitions)
 
                 if key in ['transact', 'call']:
@@ -82,6 +98,8 @@ class Deploy(object):
                         gas = default_gas
                         gas_price = default_gas_price
                         value = 0
+                        retry = False
+                        skip = False
                         wait = False
                         for option in definition[key][name]:
                             if option == 'from':
@@ -103,7 +121,8 @@ class Deploy(object):
                                             else:
                                                 padded = "0x" + d.encode('hex')
                                                 definition[key][name][option][i] = u"%s" % padded
-                                                logger.info("  Converting '%s' string to %s" % (d, padded))
+                                                logger.info("  Converting " + colors.BOLD + "'%s'" % d.encode('unicode-escape') + colors.ENDC +
+                                                            " string to " + colors.BOLD + "%s" % padded + colors.ENDC)
                                 data = definition[key][name][option]
                             if option == 'gas':
                                 gas = int(definition[key][name][option])
@@ -111,15 +130,26 @@ class Deploy(object):
                                 gas_price = int(definition[key][name][option])
                             if option == 'value':
                                 value = int(definition[key][name][option])
+                            if option == 'retry':
+                                retry = int(definition[key][name][option])
+                            if option == 'skip':
+                                skip = int(definition[key][name][option])
                             if option == 'wait':
                                 wait = definition[key][name][option]
-                        logger.info("    %s to %s (%s)..." % ("Transaction" if key == 'transact' else "Call", name, to))
+                        logger.info("  %s " % ("Transaction" if key == 'transact' else "Call") +
+                                    colors.BOLD + "%s" % name + colors.ENDC + " to " +
+                                    colors.BOLD + "%s " % to + colors.ENDC + "...")
                         if data:
-                            logger.info("      with data: %s" % data)
+                            bluedata = []
+                            for dat in data:
+                                bluedata.append(colors.OKBLUE + "%s" % dat + colors.ENDC)
+                            logger.info("      with data: [" + ", ".join(bluedata) + "]")
                         if key == 'transact':
-                            self.transact(to, from_, sig, data, gas, gas_price, value, wait)
+                            self.transact(to, from_, sig, data, gas, gas_price, value, retry, skip, wait)
                         elif key == 'call':
                             self.call(to, from_, sig, data, gas, gas_price, value)
+
+        logger.info("\n" + colors.OKGREEN + "Done!" + colors.ENDC + "\n")
 
     def compile_solidity(self, contract, contract_names=[]):
         if not spawn.find_executable("solc"):
@@ -139,62 +169,141 @@ class Deploy(object):
 
         return contracts
 
-    def create(self, contract, from_, gas, gas_price, value, wait, contract_names=None):
+    def create(self, contract, from_, gas, gas_price, value, retry, skip, wait, contract_names=None):
         instance = api.Api(self.config)
-        from_count = instance.transaction_count(defaultBlock='pending')
         verbose = (True if self.config.get('misc', 'verbosity') > 1 else False)
 
-        contract_addresses = []
-        if contract[-3:] == 'sol' or contract_names:
-            contracts = self.compile_solidity(contract, contract_names)
-            if contract_names:
-                for contract_name, contract in contracts:
-                    logger.debug("%s: %s" % (contract_name, contract))
-                    contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
-                    contract_addresses.append(contract_address)
-                    logger.info("      Contract '%s' will be available at %s" % (contract_name, contract_address))
+        addresses = self.try_create_deploy(contract, from_, gas, gas_price, value, retry, skip, verbose, contract_names)
+
+        # Wait for single contract in pending state
+        if not isinstance(addresses, list):
+            if not retry:
+                instance.wait_for_contract(addresses, defaultBlock='pending', retry=retry, skip=skip, verbose=verbose)
             else:
-                contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
-                logger.info("      Contract will be available at %s" % contract_address)
+                successful = False
+                while not successful:
+                    successful = instance.wait_for_contract(addresses, defaultBlock='pending', retry=retry, skip=skip, verbose=verbose)
+                    if not successful:
+                        addresses = self.try_create_deploy(contract, from_, gas, gas_price, value, retry, skip, verbose, contract_names)
+
+        # Wait for contract(s) being mined
+        if wait:
+            if not retry:
+                if isinstance(addresses, list):
+                    for address in addresses:
+                        instance.wait_for_contract(address, retry=retry, skip=skip, verbose=verbose)
+                else:
+                    instance.wait_for_contract(addresses, retry=retry, skip=skip, verbose=verbose)
+            else:
+                successful = False
+                while not successful:
+                    if isinstance(addresses, list):
+                        for i, address in enumerate(addresses):
+                            success = False
+                            while not success:
+                                success = instance.wait_for_contract(address, retry=retry, skip=skip, verbose=verbose)
+                                if not success:
+                                    break
+                            if success and i == len(addresses) - 1:
+                                successful = True
+                            elif not success:
+                                break
+                    else:
+                        successful = instance.wait_for_contract(addresses, retry=retry, skip=skip, verbose=verbose)
+                    if not successful:
+                        addresses = self.try_create_deploy(contract, from_, gas, gas_price, value, retry, skip, verbose, contract_names)
+
+        return addresses
+
+    def try_create_deploy(self, contract, from_, gas, gas_price, value, retry, skip, verbose, contract_names):
+        instance = api.Api(self.config)
+        addresses = []
+        if contract[-3:] == 'sol' or isinstance(contract_names, list):
+            contracts = self.compile_solidity(contract, contract_names)
+
+            for contract_name, contract in contracts:
+                logger.debug("%s: %s" % (contract_name, contract))
+
+                address = self.try_create(contract, contract_name=contract_name, from_=from_, gas=gas, gas_price=gas_price, value=value)
+
+                if not retry:
+                    instance.wait_for_contract(address, defaultBlock='pending', retry=retry, skip=skip, verbose=verbose)
+                else:
+                    successful = False
+                    while not successful:
+                        successful = instance.wait_for_contract(address, defaultBlock='pending', retry=retry, skip=skip, verbose=verbose)
+                        if not successful:
+                            address = self.try_create(contract, contract_name=contract_name, from_=from_, gas=gas, gas_price=gas_price, value=value)
+
+                addresses.append(address)
         else:
             contract = compile(open(contract).read()).encode('hex')
-            contract_address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
-            logger.info("      Contract will be available at %s" % contract_address)
+            address = self.try_create(contract, contract_name=contract_names, from_=from_, gas=gas, gas_price=gas_price, value=value)
 
-        instance.wait_for_transaction(from_count=from_count, verbose=verbose)
+        if addresses:
+            return addresses
+        return address
 
-        if wait:
-            instance.wait_for_contract(address=contract_address, verbose=verbose)
-
-        if contract_addresses:
-            return contract_addresses
-        return contract_address
-
-    def transact(self, to, from_, sig, data, gas, gas_price, value, wait):
+    def try_create(self, contract, from_, gas, gas_price, value, contract_name=None):
         instance = api.Api(self.config)
-        from_count = instance.transaction_count(defaultBlock='pending')
+        address = instance.create(contract, from_=from_, gas=gas, gas_price=gas_price, endowment=value)
+        if contract_name:
+            logger.info("      Contract " + colors.BOLD + "'%s'" % contract_name + colors.ENDC +
+                        " will be available at " + colors.WARNING + "%s" % address + colors.ENDC)
+        else:
+            logger.info("      Contract will be available at " + colors.WARNING + "%s" % address + colors.ENDC)
+        return address
+
+    def transact(self, to, from_, sig, data, gas, gas_price, value, retry, skip, wait):
+        instance = api.Api(self.config)
+        # from_count = instance.transaction_count(defaultBlock='pending')
         verbose = (True if self.config.get('misc', 'verbosity') > 1 else False)
-        if wait:
-            from_block = instance.last_block()
 
-        result = instance.transact(to, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
-        logger.info("      Result: %s" % (result if result else "OK"))
+        result = self.try_transact(to, from_, sig, data, gas, gas_price, value)
 
-        instance.wait_for_transaction(
-            from_count=from_count,
-            verbose=verbose)
+        # Wait for transaction in Tx pool
+        if not retry:
+            instance.wait_for_transaction(transactionHash=result, defaultBlock='pending', retry=retry, skip=skip, verbose=verbose)
+        else:
+            successful = False
+            while not successful:
+                successful = instance.wait_for_transaction(transactionHash=result, defaultBlock='pending', retry=retry, skip=skip, verbose=verbose)
+                if not successful:
+                    result = self.try_transact(to, from_, sig, data, gas, gas_price, value)
 
+        # Wait for transaction being mined
         if wait:
             if result.startswith("0x"):
-                instance.wait_for_transaction_mined(transactionHash=result, verbose=verbose)
+                if not retry:
+                    instance.wait_for_transaction(transactionHash=result, retry=retry, skip=skip, verbose=verbose)
+                else:
+                    successful = False
+                    while not successful:
+                        successful = instance.wait_for_transaction(transactionHash=result, retry=retry, skip=skip, verbose=verbose)
+                        if not successful:
+                            result = self.try_transact(to, from_, sig, data, gas, gas_price, value)
             else:
-                instance.wait_for_next_block(from_block=from_block, verbose=verbose)
+                from_block = instance.last_block()
+                if not retry:
+                    instance.wait_for_next_block(from_block=from_block, retry=retry, skip=skip, verbose=verbose)
+                else:
+                    successful = False
+                    while not successful:
+                        successful = instance.wait_for_next_block(from_block=from_block, retry=retry, skip=skip, verbose=verbose)
+                        if not successful:
+                            result = self.try_transact(to, from_, sig, data, gas, gas_price, value)
+
+    def try_transact(self, to, from_, sig, data, gas, gas_price, value):
+        instance = api.Api(self.config)
+        result = instance.transact(to, from_=from_, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
+        logger.info("      Result: " + colors.BOLD + "%s" % (result if result else "OK") + colors.ENDC)
+        return result
 
     def call(self, to, from_, sig, data, gas, gas_price, value):
         instance = api.Api(self.config)
 
         result = instance.call(to, sig=sig, data=data, gas=gas, gas_price=gas_price, value=value)
-        logger.info("      Result: %s" % result)
+        logger.info("      Result: " + colors.BOLD + "%s" % result + colors.ENDC)
 
         return result
 
@@ -218,12 +327,13 @@ class Deploy(object):
                                         repdef[repkey][repname][repoption][i] = replacement
                                         count = count + 1
         if count:
-            logger.info("  %sReplacing $%s with %s (%s)" % (("      " if isContract else ""), variable, replacement, count))
+            logger.info("  %sReplacing $%s with " % (("      " if isContract else ""), variable) +
+                        colors.BOLD + "%s" % replacement + colors.ENDC + " (%s)" % count)
 
         return definitions
 
     def load_yaml(self):
-        logger.info("Loading %s..." % self.filename)
+        logger.debug("\nLoading %s..." % self.filename)
         f = open(self.filename)
         data = yaml.load(f)
         f.close()

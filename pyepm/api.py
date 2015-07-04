@@ -10,6 +10,7 @@ import logging
 import requests
 import sys
 import time
+from colors import colors
 from uuid import uuid4
 
 from ethereum import abi
@@ -62,6 +63,7 @@ class Api(object):
         self.gas = config.getint("deploy", "gas")
         self.gas_price = config.getint("deploy", "gas_price")
         self.fixed_price = config.getboolean("deploy", "fixed_price")
+        self.gas_price_modifier = config.getfloat("deploy", "gas_price_modifier")
 
     def _rpc_post(self, method, params):
         if params is None:
@@ -123,7 +125,7 @@ class Api(object):
             count = None
         return count
 
-    def transaction(self, transactionHash, defaultBlock='latest'):
+    def transaction(self, transactionHash):
         params = [transactionHash]
         return self._rpc_post('eth_getTransactionByHash', params)
 
@@ -140,40 +142,12 @@ class Api(object):
             return unhex(result)
         return None
 
-    def create(self, code, from_=None, gas=None, gas_price=None, endowment=0):
-        if not code.startswith('0x'):
-            code = '0x' + code
-        # params = [{'code': code}]
-
-        if gas is None:
-            gas = self.gas
-        if gas_price is None:
-            gas_price = self.gas_price
-        if from_ is None:
-            from_ = self.address
-        if not self.fixed_price:
-            net_price = self.gasprice()
-            logger.debug("Gas price: %s" % net_price)
-            if net_price is None:
-                gas_price = self.gas_price
-            else:
-                gas_price = net_price
-
-        params = [{
-            'data': code,
-            'from': from_,
-            'gas': hex(gas).rstrip('L'),
-            'gasPrice': hex(gas_price).rstrip('L'),
-            'value': hex(endowment).rstrip('L')
-        }]
-        return self._rpc_post('eth_sendTransaction', params)
-
     def is_contract_at(self, address, defaultBlock='latest'):
         params = [address, defaultBlock]
         result = self._rpc_post('eth_getCode', params)
         if result is not None:
             return unhex(result) != 0
-        return True
+        return False
 
     def is_listening(self):
         return self._rpc_post('net_listening', None)
@@ -213,6 +187,35 @@ class Api(object):
         params = [address, hex(index), defaultBlock]
         return self._rpc_post('eth_getStorageAt', params)
 
+    def create(self, code, from_=None, gas=None, gas_price=None, endowment=0):
+        if not code.startswith('0x'):
+            code = '0x' + code
+        # params = [{'code': code}]
+
+        if gas is None:
+            gas = self.gas
+        if gas_price is None:
+            gas_price = self.gas_price
+        if from_ is None:
+            from_ = self.address
+        if not self.fixed_price:
+            net_price = self.gasprice()
+            if net_price is None:
+                gas_price = self.gas_price
+            else:
+                logger.info("    Gas price: {:.4f} szabo * {:.4f}".format(float(net_price) / 1000000000000, self.gas_price_modifier))
+                gas_price = int(net_price * self.gas_price_modifier)
+                logger.info("    Our price: %s" % "{:,}".format(gas_price))
+
+        params = [{
+            'data': code,
+            'from': from_,
+            'gas': hex(gas).rstrip('L'),
+            'gasPrice': hex(gas_price).rstrip('L'),
+            'value': hex(endowment).rstrip('L')
+        }]
+        return self._rpc_post('eth_sendTransaction', params)
+
     def transact(self, dest, sig=None, data=None, gas=None, gas_price=None, value=0, from_=None, fun_name=None):
         if not dest.startswith('0x'):
             dest = '0x' + dest
@@ -232,11 +235,12 @@ class Api(object):
             gas_price = self.gas_price
         if not self.fixed_price:
             net_price = self.gasprice()
-            logger.debug("Gas price: %s" % net_price)
             if net_price is None:
                 gas_price = self.gas_price
             else:
-                gas_price = net_price
+                logger.info("    Gas price: {:.4f} szabo * {:.4f}".format(float(net_price) / 1000000000000, self.gas_price_modifier))
+                gas_price = int(net_price * self.gas_price_modifier)
+                logger.info("    Our price: %s" % "{:,}".format(gas_price))
 
         params = [{
             'from': from_,
@@ -266,11 +270,12 @@ class Api(object):
             gas_price = self.gas_price
         if not self.fixed_price:
             net_price = self.gasprice()
-            logger.debug("Gas price: %s" % net_price)
             if net_price is None:
                 gas_price = self.gas_price
             else:
-                gas_price = net_price
+                logger.info("    Gas price: {:.4f} szabo * {:.4f}".format(float(net_price) / 1000000000000, self.gas_price_modifier))
+                gas_price = int(net_price * self.gas_price_modifier)
+                logger.info("    Our price: %s" % "{:,}".format(gas_price))
 
         params = [{
             'from': from_,
@@ -284,11 +289,15 @@ class Api(object):
             return decode_datalist(r[2:].decode('hex'))
         return []
 
-    def wait_for_contract(self, address, verbose=False, defaultBlock='latest'):
+    def wait_for_contract(self, address, defaultBlock='latest', retry=False, skip=False, verbose=False):
         if verbose:
-            sys.stdout.write('Waiting for contract at %s' % address)
-            start_time = time.time()
+            if defaultBlock == 'pending':
+                sys.stdout.write('    Waiting for contract at %s' % address)
+            else:
+                sys.stdout.write('    Waiting for contract to be mined')
+        start_time = time.time()
 
+        delta = 0
         while True:
             if verbose:
                 sys.stdout.write('.')
@@ -298,60 +307,63 @@ class Api(object):
             if codeat:
                 break
 
-        if verbose:
             delta = time.time() - start_time
-            logger.info(" took %ds" % delta)
 
-    def wait_for_transaction(self, from_count=None, verbose=False):
-        if from_count is None:
-            time.sleep(3)
-            return
+            if skip and delta > skip:
+                logger.info(" Took too long, " + colors.WARNING + "skipping" + colors.ENDC + "...")
+                break
+            if retry and delta > retry:
+                logger.info(" Took too long, " + colors.WARNING + "retrying" + colors.ENDC + "...")
+                return False
 
         if verbose:
-            sys.stdout.write('Waiting for transaction')
-            start_time = time.time()
+            if defaultBlock == 'pending':
+                logger.info(" Took %ds" % delta)
+            elif not ((skip and delta > skip) or (retry and delta > retry)):
+                logger.info(" " + colors.OKGREEN + "Ready!" + colors.ENDC + " Mining took %ds" % delta)
+        return True
 
-        logger.debug("From tx count: %s" % from_count)
+    def wait_for_transaction(self, transactionHash, defaultBlock='latest', retry=False, skip=False, verbose=False):
+        if verbose:
+            if defaultBlock == 'pending':
+                sys.stdout.write('    Waiting for transaction')
+            else:
+                sys.stdout.write('    Waiting for transaction to be mined')
+        start_time = time.time()
+
+        delta = 0
         while True:
             if verbose:
                 sys.stdout.write('.')
                 sys.stdout.flush()
             time.sleep(1)
-            to_count = self.transaction_count(defaultBlock='pending')
-            logger.debug("To tx count: %s" % to_count)
-            if to_count is None:
-                break
-            if to_count > from_count:
-                break
-            # Double-check if tx count somehow went back in time...
-            if to_count <= from_count:
-                time.sleep(1)
-                from_count = to_count - 1
-
-        if verbose:
-            delta = time.time() - start_time
-            logger.info(" took %ds" % delta)
-
-    def wait_for_transaction_mined(self, transactionHash, verbose):
-        if verbose:
-            sys.stdout.write('Waiting for transaction to be mined')
-            start_time = time.time()
-
-        while True:
-            if verbose:
-                sys.stdout.write('.')
-                sys.stdout.flush()
-            time.sleep(1)
-            result = self.transaction(transactionHash)
+            result = self.transaction(transactionHash)  # no defaultBlock, check result instead
             logger.debug("Transaction result: %s" % result)
-            if result and result['blockNumber'] is not None:
+            if isinstance(result, dict):
+                if result['blockNumber'] is not None:
+                    break
+                if defaultBlock == 'pending' and result['blockNumber'] is None:
+                    break
+            elif result == "0x01":  # For test_deploy's mocked RPC.. TODO make sure there's no side effects
+                return result
+
+            delta = time.time() - start_time
+
+            if skip and delta > skip:
+                logger.info(" Took too long, " + colors.FAIL + "skipping" + colors.ENDC + "...")
                 break
+            if retry and delta > retry:
+                logger.info(" Took too long, " + colors.WARNING + "retrying" + colors.ENDC + "...")
+                return False
 
         if verbose:
-            delta = time.time() - start_time
-            logger.info(" Ready! Mining took %ds" % delta)
+            if defaultBlock == 'pending':
+                logger.info(" Took %ds" % delta)
+            elif not ((skip and delta > skip) or (retry and delta > retry)):
+                logger.info(" " + colors.OKGREEN + "Ready!" + colors.ENDC + " Mining took %ds" % delta)
+        return True
 
-    def wait_for_next_block(self, from_block=None, verbose=False):
+    def wait_for_next_block(self, from_block=None, retry=False, skip=False, verbose=False):
         if verbose:
             sys.stdout.write('Waiting for next block to be mined')
             start_time = time.time()
@@ -361,6 +373,7 @@ class Api(object):
         else:
             last_block = from_block
 
+        delta = 0
         while True:
             if verbose:
                 sys.stdout.write('.')
@@ -370,6 +383,15 @@ class Api(object):
             if block != last_block:
                 break
 
-        if verbose:
             delta = time.time() - start_time
-            logger.info(" Ready! Mining took %ds" % delta)
+
+            if skip and delta > skip:
+                logger.info(" Took too long, " + colors.FAIL + "skipping" + colors.ENDC + "...")
+                break
+            if retry and delta > retry:
+                logger.info(" Took too long, " + colors.WARNING + "retrying" + colors.ENDC + "...")
+                return False
+
+        if verbose and not ((skip and delta > skip) or (retry and delta > retry)):
+            logger.info(" " + colors.OKGREEN + "Ready!" + colors.ENDC + " Mining took %ds" % delta)
+        return True
