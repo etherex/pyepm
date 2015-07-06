@@ -76,6 +76,8 @@ class Api(object):
             "params": params}
         headers = {'content-type': 'application/json'}
 
+        logger.debug(json.dumps(payload))
+
         r = requests.post(self.jsonrpc_url, data=json.dumps(payload), headers=headers)
         if r.status_code >= 400:
             raise ApiException(r.status_code, r.reason)
@@ -215,6 +217,12 @@ class Api(object):
             'value': hex(endowment).rstrip('L')
         }]
         return self._rpc_post('eth_sendTransaction', params)
+
+    def get_contract_address(self, tx_hash):
+        receipt = self._rpc_post('eth_getTransactionReceipt', [tx_hash])
+        if receipt and 'contractAddress' in receipt:
+            return receipt['contractAddress']
+        return "0x0"
 
     def transact(self, dest, sig=None, data=None, gas=None, gas_price=None, value=0, from_=None, fun_name=None):
         if not dest.startswith('0x'):
