@@ -83,7 +83,7 @@ def test_create(mocker):
                    'data': '0xdeadbeef',
                    'from': COW_ADDRESS,
                    'value': hex(0),
-                   'gasPrice': hex(10000000000000)}]
+                   'gasPrice': hex(50000000000)}]
     assert mock_rpc(mocker, 'create', [code], json_result=address,
                     rpc_method='eth_sendTransaction', rpc_params=rpc_params) == address
 
@@ -145,7 +145,7 @@ def test_transact(mocker):
                    'to': address,
                    'data': None,
                    'value': hex(0),
-                   'gasPrice': hex(10000000000000)}]
+                   'gasPrice': hex(50000000000)}]
     assert mock_rpc(mocker, 'transact', [address], json_result=None,
                     rpc_method='eth_sendTransaction', rpc_params=rpc_params) is None
 
@@ -155,7 +155,7 @@ def test_call_multiply(mocker):
     data = [3]
     value = 0
     gas = 100000
-    gas_price = 10000000000000
+    gas_price = 50000000000
     data_abi = '0x1df4f1440000000000000000000000000000000000000000000000000000000000000003'
     json_result = '0x0000000000000000000000000000000000000000000000000000000000000015'
     rpc_params = [{'gas': hex(gas),
@@ -181,6 +181,6 @@ def test_call_returning_array(mocker):
                    'to': address,
                    'data': data_abi,
                    'value': hex(0),
-                   'gasPrice': hex(10000000000000)}, 'latest']
+                   'gasPrice': hex(50000000000)}, 'latest']
     assert mock_rpc(mocker, 'call', [address, sig, data], json_result=json_result,
                     rpc_method='eth_call', rpc_params=rpc_params) == [3, 2, 1, 0]  # with length prefix of 3

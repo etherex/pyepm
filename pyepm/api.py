@@ -65,6 +65,9 @@ class Api(object):
         self.fixed_price = config.getboolean("deploy", "fixed_price")
         self.gas_price_modifier = config.getfloat("deploy", "gas_price_modifier")
 
+        self.retry = config.getint("deploy", "retry")
+        self.skip = config.getint("deploy", "skip")
+
     def _rpc_post(self, method, params):
         if params is None:
             params = []
@@ -297,13 +300,18 @@ class Api(object):
             return decode_datalist(r[2:].decode('hex'))
         return []
 
-    def wait_for_contract(self, address, defaultBlock='latest', retry=False, skip=False, verbose=False):
+    def wait_for_contract(self, address, defaultBlock='latest', retry=None, skip=None, verbose=False):
         if verbose:
             if defaultBlock == 'pending':
                 sys.stdout.write('    Waiting for contract at %s' % address)
             else:
                 sys.stdout.write('    Waiting for contract to be mined')
         start_time = time.time()
+
+        if retry == 1:
+            retry = self.retry
+        if skip == 1:
+            skip = self.skip
 
         delta = 0
         while True:
@@ -331,13 +339,19 @@ class Api(object):
                 logger.info(" " + colors.OKGREEN + "Ready!" + colors.ENDC + " Mining took %ds" % delta)
         return True
 
-    def wait_for_transaction(self, transactionHash, defaultBlock='latest', retry=False, skip=False, verbose=False):
+    def wait_for_transaction(self, transactionHash, defaultBlock='latest', retry=None, skip=None, verbose=False):
         if verbose:
             if defaultBlock == 'pending':
                 sys.stdout.write('    Waiting for transaction')
             else:
                 sys.stdout.write('    Waiting for transaction to be mined')
         start_time = time.time()
+
+        if retry == 1:
+            retry = self.retry
+        if skip == 1:
+            skip = self.skip
+        logger.info("Retrying in %ss... " % retry)
 
         delta = 0
         while True:
@@ -371,7 +385,7 @@ class Api(object):
                 logger.info(" " + colors.OKGREEN + "Ready!" + colors.ENDC + " Mining took %ds" % delta)
         return True
 
-    def wait_for_next_block(self, from_block=None, retry=False, skip=False, verbose=False):
+    def wait_for_next_block(self, from_block=None, retry=None, skip=None, verbose=False):
         if verbose:
             sys.stdout.write('Waiting for next block to be mined')
             start_time = time.time()
@@ -380,6 +394,11 @@ class Api(object):
             last_block = self.last_block()
         else:
             last_block = from_block
+
+        if retry == 1:
+            retry = self.retry
+        if skip == 1:
+            skip = self.skip
 
         delta = 0
         while True:
