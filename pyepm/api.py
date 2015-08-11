@@ -301,17 +301,17 @@ class Api(object):
         return []
 
     def wait_for_contract(self, address, defaultBlock='latest', retry=None, skip=None, verbose=False):
-        if verbose:
-            if defaultBlock == 'pending':
-                sys.stdout.write('    Waiting for contract at %s' % address)
-            else:
-                sys.stdout.write('    Waiting for contract to be mined')
-        start_time = time.time()
-
         if retry == 1:
             retry = self.retry
         if skip == 1:
             skip = self.skip
+
+        if verbose:
+            if defaultBlock == 'pending':
+                sys.stdout.write('    Waiting for contract at %s%s' % (address, (' (retrying in %ss)' % retry) if retry else ''))
+            else:
+                sys.stdout.write('    Waiting for contract to be mined%s' % (' (retrying in %ss)' % retry) if retry else '')
+        start_time = time.time()
 
         delta = 0
         while True:
@@ -340,18 +340,17 @@ class Api(object):
         return True
 
     def wait_for_transaction(self, transactionHash, defaultBlock='latest', retry=None, skip=None, verbose=False):
-        if verbose:
-            if defaultBlock == 'pending':
-                sys.stdout.write('    Waiting for transaction')
-            else:
-                sys.stdout.write('    Waiting for transaction to be mined')
-        start_time = time.time()
-
         if retry == 1:
             retry = self.retry
         if skip == 1:
             skip = self.skip
-        logger.info("Retrying in %ss... " % retry)
+
+        if verbose:
+            if defaultBlock == 'pending':
+                sys.stdout.write('    Waiting for transaction%s' % (' (retrying in %ss)' % retry) if retry else '')
+            else:
+                sys.stdout.write('    Waiting for transaction to be mined%s' % (' (retrying in %ss)' % retry) if retry else '')
+        start_time = time.time()
 
         delta = 0
         while True:
@@ -386,10 +385,6 @@ class Api(object):
         return True
 
     def wait_for_next_block(self, from_block=None, retry=None, skip=None, verbose=False):
-        if verbose:
-            sys.stdout.write('Waiting for next block to be mined')
-            start_time = time.time()
-
         if from_block is None:
             last_block = self.last_block()
         else:
@@ -399,6 +394,10 @@ class Api(object):
             retry = self.retry
         if skip == 1:
             skip = self.skip
+
+        if verbose:
+            sys.stdout.write('Waiting for next block to be mined%s' % (' (retrying in %ss)' % retry) if retry else '')
+            start_time = time.time()
 
         delta = 0
         while True:
