@@ -306,11 +306,15 @@ class Api(object):
         if skip == 1:
             skip = self.skip
 
+        msg = ' (%s%s%s)' % (('retrying in %ss' % retry) if retry else '',
+                             ', ' if retry and skip else '',
+                             ('skipping in %ss' % skip) if skip else '')
+
         if verbose:
             if defaultBlock == 'pending':
-                sys.stdout.write('    Waiting for contract at %s%s' % (address, (' (retrying in %ss)' % retry) if retry else ''))
+                sys.stdout.write('    Waiting for contract at %s%s' % (address, msg))
             else:
-                sys.stdout.write('    Waiting for contract to be mined%s' % (' (retrying in %ss)' % retry) if retry else '')
+                sys.stdout.write('    Waiting for contract to be mined%s' % msg)
         start_time = time.time()
 
         delta = 0
@@ -345,11 +349,15 @@ class Api(object):
         if skip == 1:
             skip = self.skip
 
+        msg = ' (%s%s%s)' % (('retrying in %ss' % retry) if retry else '',
+                             ', ' if retry and skip else '',
+                             ('skipping in %ss' % skip) if skip else '')
+
         if verbose:
             if defaultBlock == 'pending':
-                sys.stdout.write('    Waiting for transaction%s' % (' (retrying in %ss)' % retry) if retry else '')
+                sys.stdout.write('    Waiting for transaction%s' % msg)
             else:
-                sys.stdout.write('    Waiting for transaction to be mined%s' % (' (retrying in %ss)' % retry) if retry else '')
+                sys.stdout.write('    Waiting for transaction to be mined%s' % msg)
         start_time = time.time()
 
         delta = 0
@@ -395,8 +403,12 @@ class Api(object):
         if skip == 1:
             skip = self.skip
 
+        msg = ' (%s%s%s)' % (('retrying in %ss' % retry) if retry else '',
+                             ', ' if retry and skip else '',
+                             ('skipping in %ss' % skip) if skip else '')
+
         if verbose:
-            sys.stdout.write('Waiting for next block to be mined%s' % (' (retrying in %ss)' % retry) if retry else '')
+            sys.stdout.write('Waiting for next block to be mined%s' % msg)
             start_time = time.time()
 
         delta = 0
